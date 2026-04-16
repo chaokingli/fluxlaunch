@@ -862,17 +862,17 @@ class LlamaServerGUI(ctk.CTk):
 
         # Check if already running
         if self.server_manager.is_running():
-            messagebox.showwarning("警告", "服务器已经在运行")
+            messagebox.showwarning(_("dialogs.warning"), _("dialogs.server_running"))
             return
 
         # Check if port is in use
         config = self._get_config_from_ui()
         port = config.get("port", 8080)
         if self.server_manager.is_server_running_on_port(port):
-            response = messagebox.askyesno(
-                "端口被占用",
-                f"端口 {port} 已有服务器运行。\n是否停止现有服务器并启动新配置？",
-            )
+        response = messagebox.askyesno(
+            _("dialogs.port_in_use_title"),
+            _("dialogs.port_in_use").format(port=port),
+        )
             if response:
                 self._restart_server()
             return
@@ -985,20 +985,8 @@ class LlamaServerGUI(ctk.CTk):
 
     def _show_hf_examples(self):
         """Show HuggingFace URL examples"""
-        examples = """HuggingFace URL 示例:
-
-1. 完整 URL:
-https://huggingface.co/TheBloke/Llama-2-7B-GGUF/resolve/main/llama-2-7b.Q4_K_M.gguf
-
-2. 短格式:
-TheBloke/Llama-2-7B-GGUF/llama-2-7b.Q4_K_M.gguf
-
-3. 其他热门模型:
-- unsloth/Llama-3.2-3B-Instruct-GGUF/model.Q4_K_M.gguf
-- Qwen/Qwen2.5-7B-Instruct-GGUF/qwen2.5-7b-instruct-q4_k_m.gguf
-- bartowski/gemma-2-9b-it-GGUF/gemma-2-9b-it-Q4_K_M.gguf"""
-
-        messagebox.showinfo("HuggingFace URL 示例", examples)
+        examples = _("dialogs.url_examples")
+        messagebox.showinfo(_("dialogs.url_examples_title"), examples)
 
     def _populate_popular_models(self):
         """Populate popular models list"""
@@ -1137,19 +1125,8 @@ TheBloke/Llama-2-7B-GGUF/llama-2-7b.Q4_K_M.gguf
 
     def _show_about(self):
         """Show about dialog"""
-        about_text = """LLama Server Manager
-
-一个用于管理和配置 llama-server 的图形化工具
-
-功能:
-- 配置 llama-server 所有参数
-- 从 HuggingFace 下载 GGUF 模型
-- 启动/停止/重启服务器
-- 实时监控服务器状态
-- 查看服务器日志
-
-版本：1.0.0"""
-        messagebox.showinfo("关于 LLama Server Manager", about_text)
+        about_text = _("dialogs.about_text")
+        messagebox.showinfo(_("dialogs.about_title"), about_text)
 
     def _format_size(self, size: int) -> str:
         """Format file size in human-readable format"""
