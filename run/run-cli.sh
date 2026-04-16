@@ -1,6 +1,10 @@
 #!/bin/bash
-# llama-cli 运行脚本
-# 用于测试 TurboQuant 模型推理
+# llama-cli running script
+# For testing TurboQuant model inference
+
+# Set default language
+LANG="${LANG:-en}"
+source "run/i18n/${LANG%%_*}.sh" 2>/dev/null || true
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(dirname "$SCRIPT_DIR")"
@@ -24,22 +28,22 @@ THREADS="${THREADS:-$(nproc)}"
 # 日志文件
 LOG_FILE="$LOGS_DIR/cli-$(date +%Y%m%d-%H%M%S).log"
 
-echo "========================================"
-echo "llama-cli 运行脚本"
-echo "========================================"
-echo "模型：$MODEL"
-echo "提示词：$PROMPT"
-echo "预测长度：$N_PREDICT"
-echo "温度：$TEMPERATURE"
-echo "上下文：$CONTEXT_SIZE"
-echo "线程数：$THREADS"
-echo "日志：$LOG_FILE"
-echo "========================================"
+echo "$MSG_STARTUP_HEADER_DELIM"
+echo "$MSG_CLI_STARTUP"
+echo "$MSG_STARTUP_HEADER_DELIM"
+echo "$MSG_MODEL"
+echo "$MSG_CLI_PROMPT"
+echo "$MSG_CLI_TOKENS"
+echo "$MSG_CLI_TEMP"
+echo "$MSG_CONTEXT"
+echo "$MSG_THREADS"
+echo "$MSG_LOG"
+echo "$MSG_STARTUP_HEADER_DELIM"
 
 # 检查模型文件
 if [ ! -f "$MODEL" ]; then
-    echo "错误：模型文件不存在：$MODEL"
-    echo "请将 GGUF 模型文件放入 $MODELS_DIR 目录"
+    echo "$MSG_MODEL_NOT_FOUND: $MODEL"
+    echo "$MSG_MODEL_PLACEHOLDER"
     exit 1
 fi
 
