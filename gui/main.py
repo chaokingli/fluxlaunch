@@ -50,12 +50,14 @@ class LlamaServerGUI(ctk.CTk):
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
 
+        # Load saved language and update the global translator
         saved_lang = get_language()
-        self._ = Translator(saved_lang)
+        _.set_language(saved_lang)
 
+        # Language selector options (do NOT translate keys here; they must stay stable)
         self.lang_options = {
             "English": "en",
-            _("language.zh"): "zh",
+            "中文": "zh",
             "Deutsch": "de",
         }
         self.lang_reverse = {v: k for k, v in self.lang_options.items()}
@@ -98,13 +100,13 @@ class LlamaServerGUI(ctk.CTk):
 
         lang_label = ctk.CTkLabel(
             lang_frame,
-            text=self._.t("language.label") + ":",
+            text=_("language.label") + ":",
             width=80,
             anchor="e",
         )
         lang_label.pack(side="right", padx=(0, 5))
 
-        current_lang_name = self.lang_reverse.get(self._.lang, "English")
+        current_lang_name = self.lang_reverse.get(_.lang, "English")
         self.lang_selector = ctk.CTkComboBox(
             lang_frame,
             values=list(self.lang_options.keys()),
@@ -116,12 +118,13 @@ class LlamaServerGUI(ctk.CTk):
 
     def _on_language_change(self, choice: str):
         new_lang = self.lang_options.get(choice)
-        if new_lang and new_lang != self._.lang:
+        if new_lang and new_lang != _.lang:
             set_language(new_lang)
-            self._.set_language(new_lang)
+            # Update global translator so all _() calls use the new language
+            _.set_language(new_lang)
             messagebox.showinfo(
-                self._.t("dialogs.info", "Info"),
-                self._.t(
+                _("dialogs.info", "Info"),
+                _(
                     "dialogs.language_changed",
                     "Language changed. Please restart the application to apply all changes.",
                 ),
@@ -295,12 +298,12 @@ class LlamaServerGUI(ctk.CTk):
         )
         self.hf_url_entry.pack(side="left", padx=5, fill="x", expand=True)
 
-        # Examples button
+        # Examples button (correct parent frame; previously referenced undefined local_frame/repo)
         ctk.CTkButton(
-            local_frame,
+            url_frame,
             text=_("btn.use_repo"),
             width=100,
-            command=lambda r=repo["repo"]: self._use_popular_repo(r),
+            command=self._show_hf_examples,
         ).pack(side="left", padx=5)
 
         # Progress bar

@@ -222,6 +222,13 @@ class ParamWidgets:
         frame.pack(fill="x", padx=5, pady=3)
 
         label_width = 150  # Fixed width for consistent layout
+
+        # Determine a user-friendly label for the parameter
+        friendly_name = getattr(param_def, "friendly_name", None)
+        if not friendly_name:
+            # Fallback to parameter name if friendly_name is missing
+            friendly_name = getattr(param_def, "label", None) or param_def.name
+
         label = ctk.CTkLabel(frame, text=friendly_name, width=label_width, anchor="w")
         label.pack(side="left", padx=(0, 10))
 
