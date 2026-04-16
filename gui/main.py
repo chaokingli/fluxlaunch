@@ -25,6 +25,7 @@ from .params_db import (
 )
 from .cmd_preview import CommandPreview
 from .monitor.charts import MonitoringChart
+from .i18n import Translator
 
 
 class LlamaServerGUI(ctk.CTk):
@@ -34,13 +35,16 @@ class LlamaServerGUI(ctk.CTk):
         super().__init__()
 
         # Window setup
-        self.title("LLama Server Manager")
+        self.title(_("app.title"))
         self.geometry("900x700")
         self.minsize(800, 600)
 
         # Set theme
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
+
+        # Initialize translator
+        self._ = Translator()
 
         # Initialize variables first
         self.model_path_var = ctk.StringVar(value="")
@@ -80,16 +84,16 @@ class LlamaServerGUI(ctk.CTk):
 
         # File menu
         file_menu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="文件", menu=file_menu)
-        file_menu.add_command(label="保存配置", command=self._save_config)
-        file_menu.add_command(label="重置配置", command=self._reset_config)
+        menubar.add_cascade(label=_("menu.file"), menu=file_menu)
+        file_menu.add_command(label=_("menu.file.save"), command=self._save_config)
+        file_menu.add_command(label=_("menu.file.reset"), command=self._reset_config)
         file_menu.add_separator()
-        file_menu.add_command(label="退出", command=self.quit)
+        file_menu.add_command(label=_("menu.file.exit"), command=self.quit)
 
         # Help menu
         help_menu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="帮助", menu=help_menu)
-        help_menu.add_command(label="关于", command=self._show_about)
+        menubar.add_cascade(label=_("menu.help"), menu=help_menu)
+        help_menu.add_command(label=_("menu.help.about"), command=self._show_about)
 
     def _create_ui(self):
         """Create the main UI"""
@@ -98,11 +102,11 @@ class LlamaServerGUI(ctk.CTk):
         self.notebook.pack(fill="both", expand=True, padx=10, pady=10)
 
         # Create tabs
-        self.tab_config = self.notebook.add("服务器配置")
-        self.tab_model = self.notebook.add("模型管理")
-        self.tab_status = self.notebook.add("状态监控")
-        self.tab_advanced = self.notebook.add("Advanced Parameters")
-        self.tab_monitoring = self.notebook.add("Monitoring")
+        self.tab_config = self.notebook.add(_("tabs.config"))
+        self.tab_model = self.notebook.add(_("tabs.model"))
+        self.tab_status = self.notebook.add(_("tabs.status"))
+        self.tab_advanced = self.notebook.add(_("tabs.advanced"))
+        self.tab_monitoring = self.notebook.add(_("tabs.monitoring"))
 
         self._create_config_tab()
         self._create_model_tab()
@@ -120,55 +124,57 @@ class LlamaServerGUI(ctk.CTk):
 
         # Model path
         self._create_file_field(
-            self.config_scroll, "模型文件", "", self._browse_model, row
+            self.config_scroll, _("lbl.model_file"), "", self._browse_model, row
         )
         row += 1
 
         # Host
-        self._create_entry_field(self.config_scroll, "监听地址", self.host_var, row)
+        self._create_entry_field(self.config_scroll, _("lbl.host"), self.host_var, row)
         row += 1
 
         # Port
-        self._create_entry_field(self.config_scroll, "端口", self.port_var, row)
+        self._create_entry_field(self.config_scroll, _("lbl.port"), self.port_var, row)
         row += 1
 
         # Context size
         self._create_entry_field(
-            self.config_scroll, "上下文长度", self.context_size_var, row
+            self.config_scroll, _("lbl.context_size"), self.context_size_var, row
         )
         row += 1
 
         # Threads
         self._create_entry_field(
-            self.config_scroll, "线程数 (留空=自动)", self.threads_var, row
+            self.config_scroll, _("lbl.threads"), self.threads_var, row
         )
         row += 1
 
         # Batch size
         self._create_entry_field(
-            self.config_scroll, "Batch Size", self.batch_size_var, row
+            self.config_scroll, _("lbl.batch_size"), self.batch_size_var, row
         )
         row += 1
 
         # N Predict
         self._create_entry_field(
-            self.config_scroll, "最大预测长度", self.n_predict_var, row
+            self.config_scroll, _("lbl.n_predict"), self.n_predict_var, row
         )
         row += 1
 
         # Temperature
-        self._create_entry_field(self.config_scroll, "温度", self.temperature_var, row)
+        self._create_entry_field(
+            self.config_scroll, _("lbl.temperature"), self.temperature_var, row
+        )
         row += 1
 
         # GPU layers
         self._create_entry_field(
-            self.config_scroll, "GPU 层数 (0=禁用)", self.n_gpu_layers_var, row
+            self.config_scroll, _("lbl.gpu_layers"), self.n_gpu_layers_var, row
         )
         row += 1
 
         # Cache capacity
         self._create_entry_field(
-            self.config_scroll, "缓存容量", self.cache_capacity_var, row
+            self.config_scroll, _("lbl.cache_capacity"), self.cache_capacity_var, row
         )
         row += 1
 
@@ -187,22 +193,31 @@ class LlamaServerGUI(ctk.CTk):
         btn_frame.pack(fill="x", padx=10, pady=20)
 
         self.btn_start = ctk.CTkButton(
-            btn_frame, text="启动服务器", command=self._start_server, fg_color="green"
+            btn_frame,
+            text=_("btn.start_server"),
+            command=self._start_server,
+            fg_color="green",
         )
         self.btn_start.pack(side="left", padx=5)
 
         self.btn_stop = ctk.CTkButton(
-            btn_frame, text="停止服务器", command=self._stop_server, fg_color="red"
+            btn_frame,
+            text=_("btn.stop_server"),
+            command=self._stop_server,
+            fg_color="red",
         )
         self.btn_stop.pack(side="left", padx=5)
 
         self.btn_restart = ctk.CTkButton(
-            btn_frame, text="重新启动", command=self._restart_server, fg_color="orange"
+            btn_frame,
+            text=_("btn.restart"),
+            command=self._restart_server,
+            fg_color="orange",
         )
         self.btn_restart.pack(side="left", padx=5)
 
         self.btn_save = ctk.CTkButton(
-            btn_frame, text="保存配置", command=self._save_config
+            btn_frame, text=_("btn.save"), command=self._save_config
         )
         self.btn_save.pack(side="right", padx=5)
 
@@ -214,7 +229,7 @@ class LlamaServerGUI(ctk.CTk):
 
         hf_title = ctk.CTkLabel(
             hf_frame,
-            text="从 HuggingFace 下载模型",
+            text=_("lbl.download_from_hf"),
             font=ctk.CTkFont(size=14, weight="bold"),
         )
         hf_title.pack(padx=10, pady=5)
@@ -232,7 +247,10 @@ class LlamaServerGUI(ctk.CTk):
 
         # Examples button
         ctk.CTkButton(
-            url_frame, text="示例", width=60, command=self._show_hf_examples
+            local_frame,
+            text=_("btn.use_repo"),
+            width=100,
+            command=lambda r=repo["repo"]: self._use_popular_repo(r),
         ).pack(side="left", padx=5)
 
         # Progress bar
@@ -249,12 +267,18 @@ class LlamaServerGUI(ctk.CTk):
         dl_btn_frame.pack(padx=10, pady=10)
 
         self.btn_download = ctk.CTkButton(
-            dl_btn_frame, text="开始下载", command=self._start_download, fg_color="blue"
+            dl_btn_frame,
+            text=_("btn.start_download"),
+            command=self._start_download,
+            fg_color="blue",
         )
         self.btn_download.pack(side="left", padx=5)
 
         self.btn_cancel_download = ctk.CTkButton(
-            dl_btn_frame, text="取消", command=self._cancel_download, fg_color="gray"
+            dl_btn_frame,
+            text=_("btn.cancel"),
+            command=self._cancel_download,
+            fg_color="gray",
         )
         self.btn_cancel_download.pack(side="left", padx=5)
 
@@ -264,7 +288,7 @@ class LlamaServerGUI(ctk.CTk):
 
         popular_title = ctk.CTkLabel(
             popular_frame,
-            text="热门 GGUF 模型",
+            text=_("lbl.popular_models"),
             font=ctk.CTkFont(size=14, weight="bold"),
         )
         popular_title.pack(padx=10, pady=5)
@@ -279,7 +303,9 @@ class LlamaServerGUI(ctk.CTk):
         local_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         local_title = ctk.CTkLabel(
-            local_frame, text="本地模型", font=ctk.CTkFont(size=14, weight="bold")
+            local_frame,
+            text=_("lbl.local_models"),
+            font=ctk.CTkFont(size=14, weight="bold"),
         )
         local_title.pack(padx=10, pady=5)
 
@@ -290,7 +316,10 @@ class LlamaServerGUI(ctk.CTk):
 
         # Refresh button
         ctk.CTkButton(
-            local_frame, text="刷新", command=self._refresh_local_models, width=100
+            local_frame,
+            text=_("btn.refresh"),
+            command=self._refresh_local_models,
+            width=100,
         ).pack(pady=5)
 
     def _create_status_tab(self):
@@ -299,11 +328,15 @@ class LlamaServerGUI(ctk.CTk):
         status_frame = ctk.CTkFrame(self.tab_status)
         status_frame.pack(fill="x", padx=10, pady=10)
 
-        ctk.CTkLabel(status_frame, text="服务器状态:", width=120, anchor="w").pack(
-            side="left"
-        )
+        ctk.CTkLabel(
+            status_frame, text=_("lbl.server_status"), width=120, anchor="w"
+        ).pack(side="left")
         self.status_label = ctk.CTkLabel(
-            status_frame, text="未运行", fg_color="gray", width=100, corner_radius=5
+            status_frame,
+            text=_("status.stopped"),
+            fg_color="gray",
+            width=100,
+            corner_radius=5,
         )
         self.status_label.pack(side="left", padx=10)
 
@@ -314,10 +347,10 @@ class LlamaServerGUI(ctk.CTk):
         info_frame = ctk.CTkFrame(self.tab_status)
         info_frame.pack(fill="x", padx=10, pady=5)
 
-        self.url_label = ctk.CTkLabel(info_frame, text="API URL: -")
+        self.url_label = ctk.CTkLabel(info_frame, text=_("lbl.api_url"))
         self.url_label.pack(anchor="w", padx=10, pady=5)
 
-        self.uptime_label = ctk.CTkLabel(info_frame, text="运行时间：-")
+        self.uptime_label = ctk.CTkLabel(info_frame, text=_("lbl.uptime"))
         self.uptime_label.pack(anchor="w", padx=10, pady=5)
 
         # Log viewer
@@ -325,7 +358,9 @@ class LlamaServerGUI(ctk.CTk):
         log_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         log_title = ctk.CTkLabel(
-            log_frame, text="服务器日志", font=ctk.CTkFont(size=14, weight="bold")
+            log_frame,
+            text=_("lbl.server_logs"),
+            font=ctk.CTkFont(size=14, weight="bold"),
         )
         log_title.pack(padx=10, pady=5)
 
@@ -337,19 +372,25 @@ class LlamaServerGUI(ctk.CTk):
         log_btn_frame.pack(fill="x", padx=5, pady=5)
 
         ctk.CTkButton(
-            log_btn_frame, text="刷新日志", command=self._refresh_logs, width=100
+            log_btn_frame,
+            text=_("btn.refresh_logs"),
+            command=self._refresh_logs,
+            width=100,
         ).pack(side="left", padx=5)
 
         ctk.CTkButton(
             log_btn_frame,
-            text="清空日志",
+            text=_("btn.clear_logs"),
             command=self._clear_logs,
             fg_color="gray",
             width=100,
         ).pack(side="left", padx=5)
 
         ctk.CTkButton(
-            log_btn_frame, text="打开浏览器", command=self._open_browser, width=100
+            log_btn_frame,
+            text=_("btn.open_browser"),
+            command=self._open_browser,
+            width=100,
         ).pack(side="right", padx=5)
 
     def _create_advanced_tab(self):
@@ -431,19 +472,19 @@ class LlamaServerGUI(ctk.CTk):
 
         ctk.CTkButton(
             btn_frame,
-            text="应用参数",
+            text=_("btn.apply_params"),
             command=self._apply_advanced_params,
             fg_color="green",
         ).pack(side="left", padx=5)
 
         ctk.CTkButton(
             btn_frame,
-            text="重置为默认值",
+            text=_("btn.reset_defaults"),
             command=self._reset_advanced_params,
             fg_color="orange",
         ).pack(side="left", padx=5)
 
-        ctk.CTkButton(btn_frame, text="保存配置", command=self._save_config).pack(
+        ctk.CTkButton(btn_frame, text=_("btn.save"), command=self._save_config).pack(
             side="right", padx=5
         )
 
@@ -531,14 +572,14 @@ class LlamaServerGUI(ctk.CTk):
         self.command_preview = CommandPreview(
             cmd_frame,
             config=self._get_config_from_ui(),
-            label="当前服务器命令:",
+            label=_("lbl.current_command"),
         )
         self.command_preview.pack(fill="x", padx=5, pady=5)
 
         # Update command preview button
         ctk.CTkButton(
             cmd_frame,
-            text="刷新命令预览",
+            text=_("btn.refreshPreview"),
             command=lambda: self.command_preview.update_from_config(
                 self._get_config_from_ui()
             ),
@@ -551,7 +592,7 @@ class LlamaServerGUI(ctk.CTk):
 
         charts_title = ctk.CTkLabel(
             charts_frame,
-            text="实时性能监控",
+            text=_("lbl.realtime_monitoring"),
             font=ctk.CTkFont(size=14, weight="bold"),
         )
         charts_title.pack(padx=10, pady=5)
@@ -569,7 +610,7 @@ class LlamaServerGUI(ctk.CTk):
 
         self.btn_start_monitoring = ctk.CTkButton(
             chart_btn_frame,
-            text="开始监控",
+            text=_("btn.start_monitoring"),
             command=self._start_monitoring,
             fg_color="green",
             width=100,
@@ -578,7 +619,7 @@ class LlamaServerGUI(ctk.CTk):
 
         self.btn_stop_monitoring = ctk.CTkButton(
             chart_btn_frame,
-            text="停止监控",
+            text=_("btn.stop_monitoring"),
             command=self._stop_monitoring,
             fg_color="red",
             width=100,
@@ -587,14 +628,16 @@ class LlamaServerGUI(ctk.CTk):
 
         ctk.CTkButton(
             chart_btn_frame,
-            text="清除数据",
+            text=_("btn.clear_data"),
             command=self._clear_monitoring_data,
             width=100,
         ).pack(side="left", padx=5)
 
         # Status label
         self.monitoring_status = ctk.CTkLabel(
-            chart_btn_frame, text="监控状态: 已停止", text_color="gray"
+            chart_btn_frame,
+            text=_("lbl.monitoring_status") + ": " + _("status.stopped"),
+            text_color="gray",
         )
         self.monitoring_status.pack(side="right", padx=10)
 
