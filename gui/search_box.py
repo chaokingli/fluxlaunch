@@ -4,6 +4,7 @@ A search input field with search/clear icons and real-time search callbacks
 """
 
 import customtkinter as ctk
+from .i18n import _
 
 
 class SearchBox(ctk.CTkFrame):
@@ -22,7 +23,7 @@ class SearchBox(ctk.CTkFrame):
         self,
         master: any,
         search_callback: callable = None,
-        placeholder_text: str = "搜索...",
+        placeholder_text: str = None,
         width: int = 300,
         height: int = 32,
         **kwargs,
@@ -38,6 +39,10 @@ class SearchBox(ctk.CTkFrame):
             height: Height of the widget in pixels
             **kwargs: Additional arguments passed to CTkFrame
         """
+        # Default placeholder text with i18n
+        if placeholder_text is None:
+            placeholder_text = _("search.placeholder", "Search...")
+
         # Extract custom parameters from kwargs
         self._search_callback = search_callback
         self._placeholder_text = placeholder_text

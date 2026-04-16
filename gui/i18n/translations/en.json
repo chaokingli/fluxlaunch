@@ -112,6 +112,66 @@
   "placeholders": {
     "search_params": "Enter parameter name to search..."
   },
+  "search": {
+    "placeholder": "Search..."
+  },
+  "turboquant": {
+    "title": "TurboQuant KV Cache Quantization",
+    "description": "TurboQuant is an aggressive KV cache quantization technique designed to reduce memory usage.\n• turbo3: 3.25 bits/value (≈4.9× compression)\n• turbo4: 4.25 bits/value (≈3.8× compression)\n\nRecommended configurations based on VRAM size:\n• Safe default: K=q8_0, V=turbo4\n• Extreme compression: K=q8_0, V=turbo3\n• Warning: symmetric turbo3/turbo3 may significantly reduce model quality",
+    "vram_size": "VRAM Size:",
+    "apply_recommendation": "Apply Recommendation"
+  },
+  "server": {
+    "stopping": "Stopping server...",
+    "stopped": "Server stopped",
+    "already_running": "Server already running",
+    "none_running": "No running server",
+    "restarting": "Restarting server...",
+    "process_not_found": "Server process not found",
+    "permission_denied": "Permission denied stopping server",
+    "start_failed": "Server failed to start",
+    "starting": "Starting...",
+    "starting_cmd": "Starting server",
+    "started": "Server started",
+    "status": {
+      "running": "Running",
+      "stopped": "Stopped"
+    },
+    "error": "Error",
+    "error_not_found": "Error: llama-server not found",
+    "error_no_model": "Error: no model selected",
+    "error_model_missing": "Error: model file missing",
+    "error_build_cmd": "Error: failed to build command line",
+    "error_program_missing": "Program not found",
+    "error_permission": "Permission denied",
+    "error_start": "Error starting server",
+    "log_read_error": "Failed to read logs",
+    "no_logs": "No logs available"
+  },
+  "hf": {
+    "parse_url": "Parsed HuggingFace URL",
+    "file_size": "File size",
+    "download_target": "Download target",
+    "download_start": "Starting download...",
+    "download_complete": "Download complete",
+    "download_cancelled": "Download cancelled",
+    "download_failed_http": "Download failed (HTTP error)",
+    "download_error": "Download error",
+    "connection_failed": "Network connection failed",
+    "timeout": "Download timeout",
+    "unknown_error": "Unknown error",
+    "total_size": "Total size"
+  },
+  "status_extra": {
+    "copied_clipboard": "Copied to clipboard"
+  },
+  "error": {
+    "copy_failed": "Copy failed",
+    "install_pyperclip": "pyperclip library is required"
+  },
+  "btn_extra": {
+    "copy_command": "Copy Command"
+  },
     "messages": {
     "config_saved_log": "Configuration saved",
     "config_reset_log": "Configuration reset to defaults",

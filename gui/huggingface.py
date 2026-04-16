@@ -9,6 +9,7 @@ import re
 from typing import List, Dict, Optional, Tuple, Callable
 from pathlib import Path
 import threading
+from .i18n import _
 
 
 class HuggingFaceDownloader:
@@ -149,20 +150,20 @@ class HuggingFaceDownloader:
             else:
                 print(msg)
 
-        log(f"解析 URL: repo={repo_id}, file={filename}, branch={branch}")
+        log(_("hf.parse_url", f"Parsed URL: repo={repo_id}, file={filename}, branch={branch}"))
 
         # Get file info
         file_info = self.get_model_info(repo_id, filename, branch)
         if file_info:
             file_size = file_info.get("size", 0)
-            log(f"文件大小：{self._format_size(file_size)}")
+            log(_("hf.file_size", f"File size: {self._format_size(file_size)}"))
 
         # Prepare download
         download_url = self.get_download_url(repo_id, filename, branch)
         output_path = self.download_dir / Path(filename).name
 
-        log(f"下载目标：{output_path}")
-        log("开始下载...")
+        log(_("hf.download_target", f"Download target: {output_path}"))
+        log(_("hf.download_start", "Starting download..."))
 
         try:
             headers = {}
@@ -171,7 +172,7 @@ class HuggingFaceDownloader:
             )
 
             if response.status_code != 200:
-                return False, f"下载失败：HTTP {response.status_code}"
+                return False, _("hf.download_failed_http", f"Download failed: HTTP {response.status_code}")
 
             total_size = int(response.headers.get("content-length", 0))
             downloaded = 0
@@ -180,11 +181,11 @@ class HuggingFaceDownloader:
             with open(output_path, "wb") as f:
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     if self.cancel_flag.is_set():
-                        log("下载已取消")
+                        log(_("hf.download_cancelled", "Download cancelled"))
                         # Clean up partial file
                         if output_path.exists():
                             output_path.unlink()
-                        return False, "下载已取消"
+                        return False, _("hf.download_cancelled", "Download cancelled")
 
                     if chunk:
                         f.write(chunk)
@@ -193,20 +194,20 @@ class HuggingFaceDownloader:
                         if callback and total_size > 0:
                             callback(downloaded, total_size)
 
-            log(f"下载完成：{output_path}")
+            log(_("hf.download_complete", f"Download complete: {output_path}"))
             if total_size > 0:
-                log(f"总大小：{self._format_size(output_path.stat().st_size)}")
+                log(_("hf.total_size", f"Total size: {self._format_size(output_path.stat().st_size)}"))
 
             return True, str(output_path)
 
         except requests.exceptions.Timeout:
-            return False, "下载超时"
+            return False, _("hf.timeout", "Download timeout")
         except requests.exceptions.ConnectionError:
-            return False, "网络连接失败"
+            return False, _("hf.connection_failed", "Network connection failed")
         except requests.exceptions.RequestException as e:
-            return False, f"下载错误：{e}"
+            return False, _("hf.download_error", f"Download error: {e}")
         except Exception as e:
-            return False, f"未知错误：{e}"
+            return False, _("hf.unknown_error", f"Unknown error: {e}")
 
     def _format_size(self, size: int) -> str:
         """Format file size in human-readable format"""

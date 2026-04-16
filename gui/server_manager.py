@@ -13,6 +13,7 @@ import time
 
 from .config import load_config, get_llama_cpp_path, get_models_dir
 from .params_db import param_to_flag
+from .i18n import _
 
 
 class ServerManager:
@@ -95,26 +96,26 @@ class ServerManager:
         # First try to stop our managed process
         if self.process is not None:
             try:
-                self._log("正在停止服务器...")
+                self._log(_("server.stopping", "Stopping server..."))
                 self.process.terminate()
                 try:
                     self.process.wait(timeout=10)
                 except subprocess.TimeoutExpired:
                     self.process.kill()
                     self.process.wait()
-                self._log("服务器已停止")
+                self._log(_("server.stopped", "Server stopped"))
                 self.process = None
-                self._update_status("已停止")
+                self._update_status(_("server.status.stopped", "Stopped"))
                 return True
             except Exception as e:
-                self._log(f"停止服务器时出错：{e}")
+                self._log(_("server.stop_error", f"Error stopping server: {e}"))
                 return False
 
         # Try to find and kill by port
         pid = self.get_server_pid_on_port(port)
         if pid:
             try:
-                self._log(f"发现服务器运行在 PID={pid}，正在停止...")
+                self._log(_("server.pid_stopping", f"Server running on PID={pid}, stopping..."))
                 os.kill(pid, signal.SIGTERM)
                 time.sleep(2)
                 # Check if still running
@@ -124,20 +125,20 @@ class ServerManager:
                     os.kill(pid, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
-                self._log("服务器已停止")
-                self._update_status("已停止")
+                self._log(_("server.stopped", "Server stopped"))
+                self._update_status(_("server.status.stopped", "Stopped"))
                 return True
             except ProcessLookupError:
-                self._log("服务器进程未找到")
+                self._log(_("server.process_not_found", "Server process not found"))
                 return False
             except PermissionError:
-                self._log("没有权限停止服务器进程")
+                self._log(_("server.permission_denied", "Permission denied stopping server"))
                 return False
             except Exception as e:
-                self._log(f"停止服务器时出错：{e}")
+                self._log(_("server.stop_error", f"Error stopping server: {e}"))
                 return False
 
-        self._log("没有运行中的服务器")
+        self._log(_("server.none_running", "No running server"))
         return True
 
     def _build_command_line(
@@ -201,7 +202,7 @@ class ServerManager:
             True if server started successfully, False otherwise
         """
         if self.is_running():
-            self._log("服务器已经在运行")
+            self._log(_("server.already_running", "Server is already running"))
             return False
 
         # Load config if not provided (backward compatible)
@@ -211,34 +212,34 @@ class ServerManager:
         # Get llama-server path
         llama_cpp_path = get_llama_cpp_path()
         if not llama_cpp_path:
-            self._log("错误：找不到 llama-server 程序")
-            self._update_status("错误：找不到 llama-server")
+            self._log(_("server.error.not_found", "Error: llama-server not found"))
+            self._update_status(_("server.error.not_found", "Error: llama-server not found"))
             return False
 
         server_bin = llama_cpp_path / "llama-server"
         if not server_bin.exists():
-            self._log(f"错误：llama-server 不存在：{server_bin}")
-            self._update_status("错误：llama-server 不存在")
+            self._log(_("server.error.binary_missing", f"Error: llama-server missing: {server_bin}"))
+            self._update_status(_("server.error.binary_missing", "Error: llama-server missing"))
             return False
 
         # Validate model path
         model_path = config.get("model_path", "")
         if not model_path:
-            self._log("错误：未选择模型文件")
-            self._update_status("错误：未选择模型文件")
+            self._log(_("server.error.no_model", "Error: no model selected"))
+            self._update_status(_("server.error.no_model", "Error: no model selected"))
             return False
 
         if not Path(model_path).exists():
-            self._log(f"错误：模型文件不存在：{model_path}")
-            self._update_status("错误：模型文件不存在")
+            self._log(_("server.error.model_missing", f"Error: model file missing: {model_path}"))
+            self._update_status(_("server.error.model_missing", "Error: model file missing"))
             return False
 
         # Build complete command line using param_to_flag()
         cmd = self._build_command_line(config, enable_metrics=True)
 
         if not cmd:
-            self._log("错误：无法构建命令行")
-            self._update_status("错误：无法构建命令行")
+            self._log(_("server.error.build_cmd", "Error: unable to build command line"))
+            self._update_status(_("server.error.build_cmd", "Error: unable to build command line"))
             return False
 
         # Ensure log directory exists
@@ -246,8 +247,8 @@ class ServerManager:
 
         # Start process
         try:
-            self._log(f"启动服务器：{' '.join(cmd)}")
-            self._update_status("正在启动...")
+            self._log(_("server.starting_cmd", f"Starting server: {' '.join(cmd)}"))
+            self._update_status(_("server.starting", "Starting..."))
 
             with open(self._log_file, "a") as log_f:
                 self.process = subprocess.Popen(
@@ -262,29 +263,29 @@ class ServerManager:
             with open(self._pid_file, "w") as f:
                 f.write(str(self.process.pid))
 
-            self._log(f"服务器已启动 (PID: {self.process.pid})")
-            self._update_status("运行中")
+            self._log(_("server.started", f"Server started (PID: {self.process.pid})"))
+            self._update_status(_("server.status.running", "Running"))
 
             # Verify server started
             time.sleep(2)
             if not self.is_running():
-                self._log("服务器启动失败")
-                self._update_status("启动失败")
+                self._log(_("server.start_failed", "Server failed to start"))
+                self._update_status(_("server.start_failed", "Start failed"))
                 return False
 
             return True
 
         except FileNotFoundError as e:
-            self._log(f"错误：找不到程序：{e}")
-            self._update_status(f"错误：{e}")
+            self._log(_("server.error.program_missing", f"Error: program not found: {e}"))
+            self._update_status(_("server.error", f"Error: {e}"))
             return False
         except PermissionError as e:
-            self._log(f"错误：没有权限：{e}")
-            self._update_status(f"错误：{e}")
+            self._log(_("server.error.permission", f"Error: permission denied: {e}"))
+            self._update_status(_("server.error", f"Error: {e}"))
             return False
         except Exception as e:
-            self._log(f"启动服务器时出错：{e}")
-            self._update_status(f"错误：{e}")
+            self._log(_("server.error.start", f"Error starting server: {e}"))
+            self._update_status(_("server.error", f"Error: {e}"))
             return False
 
     def start_server(
@@ -316,7 +317,7 @@ class ServerManager:
         Returns:
             True if server restarted successfully, False otherwise
         """
-        self._log("正在重启服务器...")
+        self._log(_("server.restarting", "Restarting server..."))
         self.stop()
         time.sleep(1)
         return self.start(config)
@@ -324,11 +325,11 @@ class ServerManager:
     def get_logs(self, lines: int = 100) -> str:
         """Get recent server logs"""
         if not self._log_file.exists():
-            return "暂无日志"
+            return _("server.no_logs", "No logs available")
 
         try:
             with open(self._log_file, "r") as f:
                 all_lines = f.readlines()
                 return "".join(all_lines[-lines:])
         except Exception as e:
-            return f"读取日志失败：{e}"
+            return _("server.log_read_error", f"Failed to read logs: {e}")

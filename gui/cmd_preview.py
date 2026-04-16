@@ -6,6 +6,7 @@ import customtkinter as ctk
 from typing import Optional
 
 from .params_db import param_to_flag, PARAMETER_DATABASE
+from .i18n import _
 
 
 class CommandPreview(ctk.CTkFrame):
@@ -81,7 +82,10 @@ class CommandPreview(ctk.CTkFrame):
 
         # Copy button
         self.copy_button = ctk.CTkButton(
-            btn_frame, text="复制命令", width=100, command=self._copy_command
+            btn_frame,
+            text=_("btn.copy_command", "Copy Command"),
+            width=100,
+            command=self._copy_command,
         )
         self.copy_button.pack(side="left", padx=5)
 
@@ -97,11 +101,11 @@ class CommandPreview(ctk.CTkFrame):
             command = self.command_text.get("1.0", "end-1c")
             if command:
                 pyperclip.copy(command)
-                self._show_status("已复制到剪贴板!", "green")
+                self._show_status(_("status.copied_clipboard", "Copied to clipboard!"), "green")
         except ImportError:
-            self._show_status("需要安装 pyperclip", "orange")
+            self._show_status(_("error.install_pyperclip", "pyperclip is required"), "orange")
         except Exception as e:
-            self._show_status(f"复制失败: {e}", "red")
+            self._show_status(_("error.copy_failed", f"Copy failed: {e}"), "red")
 
     def _show_status(self, message: str, color: str = "green"):
         """Show temporary status message"""

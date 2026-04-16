@@ -9,6 +9,7 @@ from typing import Optional, Callable
 from .collapsible_frame import CollapsibleFrame
 from .param_widgets import ParamWidgets
 from .params_db import get_params_by_category, ParamCategory
+from .i18n import _
 
 
 class TurboQuantPanel(CollapsibleFrame):
@@ -44,7 +45,7 @@ class TurboQuantPanel(CollapsibleFrame):
             **kwargs: Additional arguments passed to CollapsibleFrame
         """
         # Set default title and expanded state
-        kwargs.setdefault("title", "TurboQuant KV 缓存量化")
+        kwargs.setdefault("title", _("turboquant.title", "TurboQuant KV Cache Quantization"))
         kwargs.setdefault("expanded", False)
 
         super().__init__(master, **kwargs)
@@ -63,14 +64,15 @@ class TurboQuantPanel(CollapsibleFrame):
     def _create_content(self):
         """Create the panel content including info label and parameter widgets."""
         # Informational label about TurboQuant
-        info_text = (
-            "TurboQuant 是一种极端的 KV 缓存量化技术，可显著减少内存占用：\n"
-            "• turbo3: 3.25 bits/值 (4.9x 压缩)\n"
-            "• turbo4: 4.25 bits/值 (3.8x 压缩)\n\n"
-            "推荐配置（基于 VRAM 大小）：\n"
-            "• 安全默认值: K=q8_0, V=turbo4\n"
-            "• 极端压缩: K=q8_0, V=turbo3\n"
-            "• 注意: 对称 turbo3/turbo3 可能导致某些模型质量严重下降"
+        info_text = _(
+            "turboquant.description",
+            "TurboQuant is an aggressive KV cache quantization method that reduces memory usage:\n"
+            "• turbo3: 3.25 bits/value (4.9x compression)\n"
+            "• turbo4: 4.25 bits/value (3.8x compression)\n\n"
+            "Recommended configurations (based on VRAM size):\n"
+            "• Safe default: K=q8_0, V=turbo4\n"
+            "• Extreme compression: K=q8_0, V=turbo3\n"
+            "• Warning: symmetric turbo3/turbo3 may significantly reduce model quality"
         )
 
         info_label = ctk.CTkLabel(
@@ -110,6 +112,11 @@ class TurboQuantPanel(CollapsibleFrame):
         ctk.CTkLabel(vram_frame, text="VRAM 大小:", width=200, anchor="w").pack(
             side="left"
         )
+        
+        # Replace with i18n label
+        for w in vram_frame.winfo_children():
+            if isinstance(w, ctk.CTkLabel):
+                w.configure(text=_("turboquant.vram_size", "VRAM Size:"))
 
         self._vram_var = ctk.StringVar(value=str(self._vram_gb))
         vram_options = ["8", "12", "16", "24", "48", "96", "128"]
@@ -126,7 +133,7 @@ class TurboQuantPanel(CollapsibleFrame):
 
         ctk.CTkButton(
             vram_frame,
-            text="应用推荐",
+            text=_("turboquant.apply_recommendation", "Apply Recommendation"),
             width=80,
             command=self._apply_vram_recommendations,
         ).pack(side="left", padx=5)

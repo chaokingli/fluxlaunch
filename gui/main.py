@@ -234,7 +234,7 @@ class LlamaServerGUI(ctk.CTk):
         # Flash attention
         flash_frame = ctk.CTkFrame(self.config_scroll)
         flash_frame.pack(fill="x", padx=10, pady=5)
-        ctk.CTkLabel(flash_frame, text="Flash Attention", width=200, anchor="w").pack(
+        ctk.CTkLabel(flash_frame, text=_("lbl.flash_attention", "Flash Attention"), width=200, anchor="w").pack(
             side="left"
         )
         ctk.CTkCheckBox(flash_frame, variable=self.flash_attn_var).pack(
@@ -759,7 +759,7 @@ class LlamaServerGUI(ctk.CTk):
         entry = ctk.CTkEntry(frame, textvariable=self.model_path_var, width=500)
         entry.pack(side="left", padx=5, fill="x", expand=True)
 
-        ctk.CTkButton(frame, text="浏览...", width=60, command=browse_cmd).pack(
+        ctk.CTkButton(frame, text=_("btn.browse", "Browse..."), width=60, command=browse_cmd).pack(
             side="left", padx=5
         )
 
