@@ -869,10 +869,10 @@ class LlamaServerGUI(ctk.CTk):
         config = self._get_config_from_ui()
         port = config.get("port", 8080)
         if self.server_manager.is_server_running_on_port(port):
-        response = messagebox.askyesno(
-            _("dialogs.port_in_use_title"),
-            _("dialogs.port_in_use").format(port=port),
-        )
+            response = messagebox.askyesno(
+                _("dialogs.port_in_use_title"),
+                _("dialogs.port_in_use").format(port=port),
+            )
             if response:
                 self._restart_server()
             return
