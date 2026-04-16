@@ -112,7 +112,7 @@
   "placeholders": {
     "search_params": "Enter parameter name to search..."
   },
-  "messages": {
+    "messages": {
     "config_saved_log": "Configuration saved",
     "config_reset_log": "Configuration reset to defaults",
     "params_applied_log": "Advanced parameters applied",
@@ -120,6 +120,9 @@
     "model_selected": "Model selected: {path}",
     "repo_selected": "Repository selected: {repo}",
     "opening_browser": "Opening browser: {url}",
-    "download_prefix": "[Download]"
+    "download_prefix": "[Download]",
+    "monitoring_started": "Performance monitoring started",
+    "monitoring_stopped": "Performance monitoring stopped",
+    "monitoring_data_cleared": "Monitoring data cleared"
   }
 }

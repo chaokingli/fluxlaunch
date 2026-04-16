@@ -75,6 +75,7 @@
     "download_complete": "下载完成!",
     "download_failed": "下载失败",
     "download_canceled": "下载已取消",
+    "download_cancelled": "下载已取消",
     "file_exists": "文件已存在",
     "no_model_selected": "未选择模型文件",
     "model_not_found": "模型文件不存在",
@@ -110,15 +111,12 @@
     "monitoring_charts": "实时性能监控",
     "monitoring_status": "监控状态:"
   },
-  "messages": {
+    "messages": {
     "configuration_saved": "配置已保存",
     "configuration_reset": "配置已重置为默认值",
     "config_saved_msg": "配置已保存",
     "advanced_applied": "高级参数已应用并保存",
     "advanced_reset": "高级参数已重置为默认值",
-    "monitoring_started": "性能监控已启动",
-    "monitoring_stopped": "性能监控已停止",
-    "monitoring_data_cleared": "监控数据已清除",
     "model_saved_to": "模型已保存到：{path}",
     "model_downloaded": "模型已下载:\n{path}",
     " restarting_server": "正在重启服务器...",

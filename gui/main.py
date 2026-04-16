@@ -55,7 +55,7 @@ class LlamaServerGUI(ctk.CTk):
 
         self.lang_options = {
             "English": "en",
-            "中文": "zh",
+            _("language.zh"): "zh",
             "Deutsch": "de",
         }
         self.lang_reverse = {v: k for k, v in self.lang_options.items()}
@@ -604,7 +604,7 @@ class LlamaServerGUI(ctk.CTk):
         config.update(config_updates)
         save_config(config)
 
-        self._add_log("高级参数已应用并保存")
+        self._add_log(_("dialogs.params_applied"))
 
     def _reset_advanced_params(self):
         """Reset advanced parameters to defaults"""
@@ -613,7 +613,7 @@ class LlamaServerGUI(ctk.CTk):
             param_def = info["param_def"]
             widget.set_value(param_def.default)
 
-        self._add_log("高级参数已重置为默认值")
+        self._add_log(_("dialogs.params_reset"))
 
     def _create_monitoring_tab(self):
         """Create monitoring tab with real-time charts and command preview"""
@@ -697,9 +697,9 @@ class LlamaServerGUI(ctk.CTk):
         """Start monitoring data collection"""
         self.monitoring_chart.start_updating()
         self.monitoring_status.configure(
-            text="Monitoring Status: Running", text_color="green"
+            text=_("status.monitoring_running"), text_color="green"
         )
-        self._add_log("性能监控已启动")
+        self._add_log(_("messages.monitoring_started"))
 
         # Start simulated data updates (in real implementation, this would connect to actual metrics)
         self._update_monitoring_data()
@@ -708,14 +708,14 @@ class LlamaServerGUI(ctk.CTk):
         """Stop monitoring data collection"""
         self.monitoring_chart.stop_updating()
         self.monitoring_status.configure(
-            text="Monitoring Status: Stopped", text_color="gray"
+            text=_("status.monitoring_stopped"), text_color="gray"
         )
-        self._add_log("性能监控已停止")
+        self._add_log(_("messages.monitoring_stopped"))
 
     def _clear_monitoring_data(self):
         """Clear monitoring chart data"""
         self.monitoring_chart.clear_data()
-        self._add_log("监控数据已清除")
+        self._add_log(_("messages.monitoring_data_cleared"))
 
     def _update_monitoring_data(self):
         """Update monitoring chart with simulated data"""
@@ -965,7 +965,7 @@ class LlamaServerGUI(ctk.CTk):
             else:
                 self.download_progress.set(0)
                 self.download_progress_label.configure(text="Download failed")
-                if "取消" not in result:
+                if _("btn.cancel") not in result:
                     messagebox.showerror(_("dialogs.download_failed"), result)
 
         def run_download():
@@ -981,7 +981,7 @@ class LlamaServerGUI(ctk.CTk):
         """Cancel current download"""
         self.hf_downloader.set_cancel()
         self.btn_download.configure(state="normal")
-        self.download_progress_label.configure(text="下载已取消")
+        self.download_progress_label.configure(text=_("dialogs.download_cancelled"))
 
     def _show_hf_examples(self):
         """Show HuggingFace URL examples"""
@@ -1002,7 +1002,7 @@ class LlamaServerGUI(ctk.CTk):
 
             ctk.CTkButton(
                 frame,
-                text="使用此仓库",
+                text=_("btn.use_this_repo"),
                 width=100,
                 command=lambda r=repo["repo"]: self._use_popular_repo(r),
             ).pack(side="left", padx=5)
@@ -1035,7 +1035,7 @@ class LlamaServerGUI(ctk.CTk):
 
             ctk.CTkButton(
                 frame,
-                text="选择此模型",
+                text=_("btn.select_model"),
                 width=100,
                 command=lambda p=str(gguf): self._select_model(p),
             ).pack(side="left", padx=5)

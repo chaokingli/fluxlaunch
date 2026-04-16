@@ -75,6 +75,7 @@
     "download_complete": "Download abgeschlossen!",
     "download_failed": "Download fehlgeschlagen",
     "download_canceled": "Download abgebrochen",
+    "download_cancelled": "Download abgebrochen",
     "file_exists": "Datei bereits vorhanden",
     "no_model_selected": "Keine Modelldatei ausgewählt",
     "model_not_found": "Modelldatei nicht gefunden",
