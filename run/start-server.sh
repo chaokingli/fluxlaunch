@@ -1,6 +1,6 @@
 #!/bin/bash
-# llama-server 启动脚本
-# 用于部署和测试 TurboQuant 模型
+# llama-server startup script
+#用于部署和测试 TurboQuant 模型
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(dirname "$SCRIPT_DIR")"
@@ -10,6 +10,14 @@ LOGS_DIR="$BASE_DIR/logs"
 
 # 设置库路径
 export LD_LIBRARY_PATH="$LLAMA_CPP/bin:$LD_LIBRARY_PATH"
+
+# Source translation file based on LANG
+I18N_FILE="${LANG%%_*}.sh"
+if [ -f "$SCRIPT_DIR/i18n/$I18N_FILE" ]; then
+    source "$SCRIPT_DIR/i18n/$I18N_FILE"
+else
+    source "$SCRIPT_DIR/i18n/en.sh"
+fi
 
 # 模型文件 (修改为实际模型名称)
 MODEL="${1:-$MODELS_DIR/model.gguf}"
@@ -23,21 +31,21 @@ THREADS="${THREADS:-$(nproc)}"
 # 日志文件
 LOG_FILE="$LOGS_DIR/server-$(date +%Y%m%d-%H%M%S).log"
 
-echo "========================================"
-echo "llama-server 启动脚本"
-echo "========================================"
-echo "模型：$MODEL"
-echo "主机：$HOST"
-echo "端口：$PORT"
-echo "上下文：$CONTEXT_SIZE"
-echo "线程数：$THREADS"
-echo "日志：$LOG_FILE"
-echo "========================================"
+echo "$MSG_STARTUP_HEADER_DELIM"
+echo "$MSG_STARTUP_HEADER"
+echo "$MSG_STARTUP_HEADER_DELIM"
+echo "$MSG_MODEL"
+echo "$MSG_HOST"
+echo "$MSG_PORT"
+echo "$MSG_CONTEXT"
+echo "$MSG_THREADS"
+echo "$MSG_LOG"
+echo "$MSG_STARTUP_HEADER_DELIM"
 
 # 检查模型文件
 if [ ! -f "$MODEL" ]; then
-    echo "错误：模型文件不存在：$MODEL"
-    echo "请将 GGUF 模型文件放入 $MODELS_DIR 目录"
+    echo "$MSG_MODEL_NOT_FOUND"
+    echo "$MSG_MODEL_PLACEHOLDER"
     exit 1
 fi
 

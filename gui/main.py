@@ -404,13 +404,15 @@ class LlamaServerGUI(ctk.CTk):
         search_frame.pack(fill="x", padx=10, pady=5)
 
         ctk.CTkLabel(
-            search_frame, text="搜索参数:", font=ctk.CTkFont(weight="bold")
+            search_frame,
+            text=_("labels.search_params"),
+            font=ctk.CTkFont(weight="bold"),
         ).pack(side="left", padx=5)
 
         self.advanced_search = SearchBox(
             search_frame,
             search_callback=self._filter_advanced_params,
-            placeholder_text="输入参数名称搜索...",
+            placeholder_text=_("placeholders.search_params"),
             width=400,
         )
         self.advanced_search.pack(side="left", padx=5, fill="x", expand=True)
@@ -427,11 +429,11 @@ class LlamaServerGUI(ctk.CTk):
 
         # Category display names mapping
         category_names = {
-            ParamCategory.COMMON: "Common Parameters",
-            ParamCategory.GPU_MEMORY: "GPU / Memory Settings",
-            ParamCategory.SERVER: "Server Settings",
-            ParamCategory.SAMPLING: "Sampling Parameters",
-            ParamCategory.TURBOQUANT: "TurboQuant Options",
+            ParamCategory.COMMON: _("labels.common_params"),
+            ParamCategory.GPU_MEMORY: _("labels.gpu_memory_params"),
+            ParamCategory.SERVER: _("labels.server_params"),
+            ParamCategory.SAMPLING: _("labels.sampling_params"),
+            ParamCategory.TURBOQUANT: _("labels.turboquant_params"),
         }
 
         # Create collapsible sections for each category
@@ -644,7 +646,9 @@ class LlamaServerGUI(ctk.CTk):
     def _start_monitoring(self):
         """Start monitoring data collection"""
         self.monitoring_chart.start_updating()
-        self.monitoring_status.configure(text="监控状态: 运行中", text_color="green")
+        self.monitoring_status.configure(
+            text="Monitoring Status: Running", text_color="green"
+        )
         self._add_log("性能监控已启动")
 
         # Start simulated data updates (in real implementation, this would connect to actual metrics)
@@ -653,7 +657,9 @@ class LlamaServerGUI(ctk.CTk):
     def _stop_monitoring(self):
         """Stop monitoring data collection"""
         self.monitoring_chart.stop_updating()
-        self.monitoring_status.configure(text="监控状态: 已停止", text_color="gray")
+        self.monitoring_status.configure(
+            text="Monitoring Status: Stopped", text_color="gray"
+        )
         self._add_log("性能监控已停止")
 
     def _clear_monitoring_data(self):
@@ -708,7 +714,7 @@ class LlamaServerGUI(ctk.CTk):
         """Open file dialog to select model"""
         models_dir = str(get_models_dir())
         filename = filedialog.askopenfilename(
-            title="选择 GGUF 模型文件",
+            title=_("dialogs.select_model_file"),
             initialdir=models_dir,
             filetypes=[("GGUF files", "*.gguf"), ("All files", "*.*")],
         )
@@ -781,14 +787,14 @@ class LlamaServerGUI(ctk.CTk):
         """Save current configuration"""
         config = self._get_config_from_ui()
         if save_config(config):
-            self._add_log("配置已保存")
-            messagebox.showinfo("成功", "配置已保存")
+            self._add_log(_("messages.config_saved_log"))
+            messagebox.showinfo(_("dialogs.config_saved"), _("dialogs.config_saved"))
         else:
-            messagebox.showerror("错误", "保存配置失败")
+            messagebox.showerror(_("dialogs.save_failed"), _("dialogs.save_failed"))
 
     def _reset_config(self):
         """Reset configuration to defaults"""
-        if messagebox.askyesno("确认", "确定要重置为默认配置吗？"):
+        if messagebox.askyesno(_("dialogs.confirm_reset"), _("dialogs.confirm_reset")):
             for key, value in DEFAULT_CONFIG.items():
                 var_name = f"{key}_var"
                 if hasattr(self, var_name):
@@ -797,7 +803,7 @@ class LlamaServerGUI(ctk.CTk):
                         var.set(value)
                     elif isinstance(var, ctk.StringVar):
                         var.set(str(value) if value is not None else "")
-            self._add_log("配置已重置为默认值")
+            self._add_log(_("messages.config_reset_log"))
 
     def _start_server(self):
         """Start the server"""
@@ -826,7 +832,10 @@ class LlamaServerGUI(ctk.CTk):
             config = self._get_config_from_ui()
             success = self.server_manager.start(config)
             if not success:
-                self.after(0, lambda: messagebox.showerror("错误", "服务器启动失败"))
+                self.after(
+                    0,
+                    lambda: messagebox.showerror(_("status.error"), _("status.error")),
+                )
 
         thread = threading.Thread(target=run_start, daemon=True)
         thread.start()
@@ -838,16 +847,22 @@ class LlamaServerGUI(ctk.CTk):
             config = self._get_config_from_ui()
             port = config.get("port", 8080)
             if not self.server_manager.is_server_running_on_port(port):
-                messagebox.showinfo("提示", "服务器未运行")
+                messagebox.showinfo(
+                    _("dialogs.server_not_running"), _("dialogs.server_not_running")
+                )
                 return
 
-        response = messagebox.askyesno("确认", "确定要停止服务器吗？")
+        response = messagebox.askyesno(
+            _("dialogs.confirm_stop"), _("dialogs.confirm_stop")
+        )
         if response:
             self.server_manager.stop()
 
     def _restart_server(self):
         """Restart the server"""
-        response = messagebox.askyesno("确认", "确定要重新启动服务器吗？")
+        response = messagebox.askyesno(
+            _("dialogs.confirm_restart"), _("dialogs.confirm_restart")
+        )
         if not response:
             return
 
@@ -862,13 +877,13 @@ class LlamaServerGUI(ctk.CTk):
         """Start downloading a model"""
         url = self.hf_url_var.get().strip()
         if not url:
-            messagebox.showwarning("警告", "请输入 HuggingFace URL")
+            messagebox.showwarning(_("dialogs.enter_url"), _("dialogs.enter_url"))
             return
 
         # Disable download button
         self.btn_download.configure(state="disabled")
         self.download_progress.set(0)
-        self.download_progress_label.configure(text="正在连接...")
+        self.download_progress_label.configure(text="Connecting...")
 
         def progress_callback(downloaded, total):
             if total > 0:
@@ -882,21 +897,26 @@ class LlamaServerGUI(ctk.CTk):
                 )
 
         def log_callback(msg):
-            self.after(0, lambda: self._add_log(f"[下载] {msg}"))
+            self.after(
+                0, lambda: self._add_log(f"[{_('messages.download_prefix')}] {msg}")
+            )
 
         def on_complete(success, result):
             self.btn_download.configure(state="normal")
             if success:
                 self.download_progress.set(1)
-                self.download_progress_label.configure(text="下载完成!")
-                self._add_log(f"模型已保存到：{result}")
+                self.download_progress_label.configure(text="Download complete!")
+                self._add_log(f"Model saved to: {result}")
                 self._refresh_local_models()
-                messagebox.showinfo("成功", f"模型已下载:\n{result}")
+                messagebox.showinfo(
+                    _("dialogs.download_complete"),
+                    _("dialogs.download_saved_to").format(path=result),
+                )
             else:
                 self.download_progress.set(0)
-                self.download_progress_label.configure(text="下载失败")
+                self.download_progress_label.configure(text="Download failed")
                 if "取消" not in result:
-                    messagebox.showerror("错误", result)
+                    messagebox.showerror(_("dialogs.download_failed"), result)
 
         def run_download():
             success, result = self.hf_downloader.download(
@@ -1021,8 +1041,8 @@ TheBloke/Llama-2-7B-GGUF/llama-2-7b.Q4_K_M.gguf
 
     def _update_status_label(self, status: str):
         """Update the status indicator"""
-        if status == "运行中":
-            self.status_label.configure(text="运行中", fg_color="green")
+        if status == _("status.running"):
+            self.status_label.configure(text=_("status.running"), fg_color="green")
             self.pid_label.configure(
                 text=f"PID: {self.server_manager.process.pid if self.server_manager.process else 'N/A'}"
             )
@@ -1032,13 +1052,13 @@ TheBloke/Llama-2-7B-GGUF/llama-2-7b.Q4_K_M.gguf
             if host == "0.0.0.0":
                 host = "localhost"
             self.url_label.configure(text=f"API URL: http://{host}:{port}")
-        elif status == "已停止":
-            self.status_label.configure(text="已停止", fg_color="red")
+        elif status == _("status.stopped"):
+            self.status_label.configure(text=_("status.stopped"), fg_color="red")
             self.pid_label.configure(text="")
             self.url_label.configure(text="API URL: -")
-            self.uptime_label.configure(text="运行时间：-")
-        elif status.startswith("错误"):
-            self.status_label.configure(text="错误", fg_color="orange")
+            self.uptime_label.configure(text="Uptime: -")
+        elif status.startswith(_("status.error")):
+            self.status_label.configure(text=_("status.error"), fg_color="orange")
         else:
             self.status_label.configure(text=status, fg_color="gray")
 
@@ -1047,18 +1067,20 @@ TheBloke/Llama-2-7B-GGUF/llama-2-7b.Q4_K_M.gguf
         is_running = self.server_manager.is_running()
 
         if is_running:
-            if self.status_label.cget("text") != "运行中":
-                self._update_status_label("运行中")
+            if self.status_label.cget("text") != _("status.running"):
+                self._update_status_label(_("status.running"))
         else:
             # Check if server running on our port
             config = self._get_config_from_ui()
             port = config.get("port", 8080)
             if self.server_manager.is_server_running_on_port(port):
                 pid = self.server_manager.get_server_pid_on_port(port)
-                self.status_label.configure(text="外部运行", fg_color="yellow")
-                self.pid_label.configure(text=f"外部 PID: {pid}")
-            elif self.status_label.cget("text") == "运行中":
-                self._update_status_label("已停止")
+                self.status_label.configure(
+                    text=_("status.external"), fg_color="yellow"
+                )
+                self.pid_label.configure(text=f"External PID: {pid}")
+            elif self.status_label.cget("text") == _("status.running"):
+                self._update_status_label(_("status.stopped"))
 
         # Schedule next update
         self.after(2000, self._update_status_loop)

@@ -2,6 +2,7 @@
 HuggingFace Model Downloader
 Download GGUF models from HuggingFace Hub
 """
+
 import requests
 import os
 import re
@@ -40,8 +41,7 @@ class HuggingFaceDownloader:
         if url.startswith("http"):
             # Pattern: huggingface.co/{repo_id}/resolve/{branch}/{filename}
             match = re.search(
-                r"huggingface\.co/([^/]+/[^/]+)/(?:resolve|blob)/([^/]+)/(.+)",
-                url
+                r"huggingface\.co/([^/]+/[^/]+)/(?:resolve|blob)/([^/]+)/(.+)", url
             )
             if match:
                 return match.group(1), match.group(3), match.group(2)
@@ -57,7 +57,9 @@ class HuggingFaceDownloader:
 
         return None
 
-    def get_model_info(self, repo_id: str, filename: str, branch: str = "main") -> Optional[Dict]:
+    def get_model_info(
+        self, repo_id: str, filename: str, branch: str = "main"
+    ) -> Optional[Dict]:
         """Get model file info from HuggingFace API"""
         api_url = f"https://huggingface.co/api/models/{repo_id}/tree/{branch}"
 
@@ -82,7 +84,10 @@ class HuggingFaceDownloader:
                     files = response.json()
                     file_name = path_parts[-1]
                     for file_info in files:
-                        if file_info.get("path") == file_name or file_info.get("name") == file_name:
+                        if (
+                            file_info.get("path") == file_name
+                            or file_info.get("name") == file_name
+                        ):
                             return file_info
 
             return None
@@ -90,11 +95,15 @@ class HuggingFaceDownloader:
             print(f"Error getting model info: {e}")
             return None
 
-    def get_download_url(self, repo_id: str, filename: str, branch: str = "main") -> str:
+    def get_download_url(
+        self, repo_id: str, filename: str, branch: str = "main"
+    ) -> str:
         """Get the direct download URL for a model file"""
         return f"https://huggingface.co/{repo_id}/resolve/{branch}/{filename}"
 
-    def list_available_models(self, repo_id: str, branch: str = "main", pattern: str = "*.gguf") -> List[str]:
+    def list_available_models(
+        self, repo_id: str, branch: str = "main", pattern: str = "*.gguf"
+    ) -> List[str]:
         """List all GGUF files in a repository"""
         api_url = f"https://huggingface.co/api/models/{repo_id}/tree/{branch}"
 
@@ -119,7 +128,7 @@ class HuggingFaceDownloader:
         self,
         url: str,
         callback: Optional[Callable[[int, int], None]] = None,
-        log_callback: Optional[Callable[[str], None]] = None
+        log_callback: Optional[Callable[[str], None]] = None,
     ) -> Tuple[bool, str]:
         """
         Download a model file from HuggingFace
@@ -130,7 +139,7 @@ class HuggingFaceDownloader:
 
         parsed = self.parse_huggingface_url(url)
         if not parsed:
-            return False, "无效的 HuggingFace URL 格式"
+            return False, _("dialogs.invalid_url")
 
         repo_id, filename, branch = parsed
 
@@ -157,7 +166,9 @@ class HuggingFaceDownloader:
 
         try:
             headers = {}
-            response = self.session.get(download_url, stream=True, headers=headers, timeout=30)
+            response = self.session.get(
+                download_url, stream=True, headers=headers, timeout=30
+            )
 
             if response.status_code != 200:
                 return False, f"下载失败：HTTP {response.status_code}"
@@ -212,6 +223,9 @@ class HuggingFaceDownloader:
             {"name": "Qwen 2.5 (Alibaba)", "repo": "Qwen/Qwen2.5-7B-Instruct-GGUF"},
             {"name": "Gemma 2 (Google)", "repo": "bartowski/gemma-2-9b-it-GGUF"},
             {"name": "Mistral 7B", "repo": "TheBloke/Mistral-7B-Instruct-v0.3-GGUF"},
-            {"name": "Phi-3 (Microsoft)", "repo": "bartowski/Phi-3.5-mini-instruct-GGUF"},
+            {
+                "name": "Phi-3 (Microsoft)",
+                "repo": "bartowski/Phi-3.5-mini-instruct-GGUF",
+            },
             {"name": "Yi 1.5 (01.AI)", "repo": "bartowski/Yi-1.5-9B-Chat-GGUF"},
         ]
