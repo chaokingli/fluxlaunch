@@ -27,6 +27,8 @@ DEFAULT_CONFIG.update(
     {
         "model_path": "",
         "cache_capacity": "2048MiB",
+        # Language setting for i18n support (default: "en")
+        "language": "en",
         # Add config version for migration
         "config_version": CONFIG_VERSION,
     }
@@ -114,6 +116,18 @@ def set_config_value(key: str, value: Any) -> bool:
     """Set a single configuration value and save"""
     config = load_config()
     config[key] = value
+    return save_config(config)
+
+
+def get_language() -> str:
+    """Get the current language setting (default: "en")"""
+    return load_config().get("language", "en")
+
+
+def set_language(lang: str) -> bool:
+    """Set the language setting and save to config"""
+    config = load_config()
+    config["language"] = lang
     return save_config(config)
 
 

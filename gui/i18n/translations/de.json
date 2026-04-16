@@ -1,4 +1,10 @@
 {
+  "language": {
+    "label": "Sprache",
+    "en": "English",
+    "zh": "中文",
+    "de": "Deutsch"
+  },
   "menu": {
     "file": "Datei",
     "file.save": "Konfiguration speichern",
@@ -70,7 +76,8 @@
     "model_not_found": "Modelldatei nicht gefunden",
     "connection_failed": "Netzwerkverbindung fehlgeschlagen",
     "download_timeout": "Download zeitüberschreitung",
-    "unknown_error": "Unbekannter Fehler"
+    "unknown_error": "Unbekannter Fehler",
+    "language_changed": "Sprache geändert. Bitte starten Sie die Anwendung neu, um alle Änderungen anzuwenden."
   },
   "labels": {
     "model_file": "Modelldatei",

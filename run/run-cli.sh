@@ -2,15 +2,20 @@
 # llama-cli running script
 # For testing TurboQuant model inference
 
-# Set default language
-LANG="${LANG:-en}"
-source "run/i18n/${LANG%%_*}.sh" 2>/dev/null || true
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(dirname "$SCRIPT_DIR")"
 LLAMA_CPP="$BASE_DIR/llama.cpp"
 MODELS_DIR="$BASE_DIR/models"
 LOGS_DIR="$BASE_DIR/logs"
+
+# Set default language and source translations
+LANG="${LANG:-en}"
+I18N_FILE="${LANG%%_*}.sh"
+if [ -f "$SCRIPT_DIR/i18n/$I18N_FILE" ]; then
+    source "$SCRIPT_DIR/i18n/$I18N_FILE"
+else
+    source "$SCRIPT_DIR/i18n/en.sh"
+fi
 
 # 设置库路径
 export LD_LIBRARY_PATH="$LLAMA_CPP/bin:$LD_LIBRARY_PATH"

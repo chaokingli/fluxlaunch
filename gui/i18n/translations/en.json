@@ -1,4 +1,10 @@
 {
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "zh": "中文",
+    "de": "Deutsch"
+  },
   "menu": {
     "file": "File",
     "file.save": "Save Configuration",
@@ -75,7 +81,7 @@
     "monitoring_running": "Monitoring: Running",
     "monitoring_stopped": "Monitoring: Stopped"
   },
-  "dialogs": {
+    "dialogs": {
     "config_saved": "Configuration saved",
     "save_failed": "Failed to save configuration",
     "confirm_reset": "Are you sure you want to reset to default configuration?",
@@ -97,7 +103,8 @@
     "params_reset": "Advanced parameters reset to defaults",
     "monitoring_started": "Performance monitoring started",
     "monitoring_stopped": "Performance monitoring stopped",
-    "data_cleared": "Monitoring data cleared"
+    "data_cleared": "Monitoring data cleared",
+    "language_changed": "Language changed. Please restart the application to apply all changes."
   },
   "placeholders": {
     "search_params": "Enter parameter name to search..."

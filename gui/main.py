@@ -12,7 +12,14 @@ import os
 import webbrowser
 from datetime import datetime
 
-from .config import load_config, save_config, get_models_dir, DEFAULT_CONFIG
+from .config import (
+    load_config,
+    save_config,
+    get_models_dir,
+    DEFAULT_CONFIG,
+    get_language,
+    set_language,
+)
 from .server_manager import ServerManager
 from .huggingface import HuggingFaceDownloader
 from .collapsible_frame import CollapsibleFrame
@@ -25,7 +32,7 @@ from .params_db import (
 )
 from .cmd_preview import CommandPreview
 from .monitor.charts import MonitoringChart
-from .i18n import Translator
+from .i18n import Translator, _
 
 
 class LlamaServerGUI(ctk.CTk):
@@ -43,8 +50,15 @@ class LlamaServerGUI(ctk.CTk):
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
 
-        # Initialize translator
-        self._ = Translator()
+        saved_lang = get_language()
+        self._ = Translator(saved_lang)
+
+        self.lang_options = {
+            "English": "en",
+            "中文": "zh",
+            "Deutsch": "de",
+        }
+        self.lang_reverse = {v: k for k, v in self.lang_options.items()}
 
         # Initialize variables first
         self.model_path_var = ctk.StringVar(value="")
@@ -70,12 +84,48 @@ class LlamaServerGUI(ctk.CTk):
         # Create UI
         self._create_menu()
         self._create_ui()
+        self._create_language_selector()
 
         # Load initial config
         self._load_config_to_ui()
 
         # Start status update loop
         self._update_status_loop()
+
+    def _create_language_selector(self):
+        lang_frame = ctk.CTkFrame(self, fg_color="transparent")
+        lang_frame.pack(fill="x", padx=10, pady=(0, 5))
+
+        lang_label = ctk.CTkLabel(
+            lang_frame,
+            text=self._.t("language.label") + ":",
+            width=80,
+            anchor="e",
+        )
+        lang_label.pack(side="right", padx=(0, 5))
+
+        current_lang_name = self.lang_reverse.get(self._.lang, "English")
+        self.lang_selector = ctk.CTkComboBox(
+            lang_frame,
+            values=list(self.lang_options.keys()),
+            width=120,
+            command=self._on_language_change,
+        )
+        self.lang_selector.set(current_lang_name)
+        self.lang_selector.pack(side="right")
+
+    def _on_language_change(self, choice: str):
+        new_lang = self.lang_options.get(choice)
+        if new_lang and new_lang != self._.lang:
+            set_language(new_lang)
+            self._.set_language(new_lang)
+            messagebox.showinfo(
+                self._.t("dialogs.info", "Info"),
+                self._.t(
+                    "dialogs.language_changed",
+                    "Language changed. Please restart the application to apply all changes.",
+                ),
+            )
 
     def _create_menu(self):
         """Create menu bar"""

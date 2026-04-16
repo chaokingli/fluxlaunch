@@ -1,4 +1,10 @@
 {
+  "language": {
+    "label": "语言",
+    "en": "English",
+    "zh": "中文",
+    "de": "Deutsch"
+  },
   "menu": {
     "file": "文件",
     "file.save": "保存配置",
@@ -70,7 +76,8 @@
     "model_not_found": "模型文件不存在",
     "connection_failed": "网络连接失败",
     "download_timeout": "下载超时",
-    "unknown_error": "未知错误"
+    "unknown_error": "未知错误",
+    "language_changed": "语言已更改。请重新启动应用程序以应用所有更改。"
   },
   "labels": {
     "model_file": "模型文件",

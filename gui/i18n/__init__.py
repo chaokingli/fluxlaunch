@@ -62,6 +62,18 @@ class Translator:
                 break
         return value if value is not None else (default or key)
 
+    def __call__(self, key, default=None):
+        """Make Translator callable as _(key).
+
+        Args:
+            key: Translation key in dot notation.
+            default: Optional default value if key not found.
+
+        Returns:
+            Translated string or key/default if not found.
+        """
+        return self.t(key, default)
+
     def set_language(self, lang):
         """Change current language.
 
