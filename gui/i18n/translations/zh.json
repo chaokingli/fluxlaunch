@@ -211,4 +211,58 @@
     "phi3": "Phi-3 (Microsoft)",
     "yi15": "Yi 1.5 (01.AI)"
   }
+,
+  "search": {
+    "placeholder": "搜索..."
+  },
+  "turboquant": {
+    "title": "TurboQuant KV 缓存量化",
+    "description": "TurboQuant 是一种激进的 KV Cache 量化技术，可以显著降低内存占用。\n• turbo3: 3.25 bit/值 (约 4.9× 压缩)\n• turbo4: 4.25 bit/值 (约 3.8× 压缩)\n\n推荐配置：\n• 安全默认值: K=q8_0, V=turbo4\n• 极端压缩: K=q8_0, V=turbo3\n• 注意: 对称 turbo3/turbo3 可能降低某些模型质量",
+    "vram_size": "VRAM 大小:",
+    "apply_recommendation": "应用推荐"
+  },
+  "hf": {
+    "parse_url": "解析 HuggingFace URL",
+    "file_size": "文件大小",
+    "download_target": "下载目标",
+    "download_start": "开始下载...",
+    "download_complete": "下载完成",
+    "download_cancelled": "下载已取消",
+    "download_failed_http": "下载失败 (HTTP 错误)",
+    "download_error": "下载错误",
+    "connection_failed": "网络连接失败",
+    "timeout": "下载超时",
+    "unknown_error": "未知错误",
+    "total_size": "文件大小"
+  },
+  "server": {
+    "stopping": "正在停止服务器...",
+    "stopped": "服务器已停止",
+    "already_running": "服务器已经在运行",
+    "none_running": "没有运行中的服务器",
+    "restarting": "正在重启服务器...",
+    "process_not_found": "服务器进程未找到",
+    "permission_denied": "没有权限停止服务器进程",
+    "start_failed": "服务器启动失败",
+    "starting": "正在启动...",
+    "starting_cmd": "正在启动服务器",
+    "started": "服务器已启动",
+    "status": {
+      "running": "运行中",
+      "stopped": "已停止"
+    },
+    "error": "错误",
+    "no_logs": "暂无日志",
+    "log_read_error": "读取日志失败"
+  },
+  "status_extra": {
+    "copied_clipboard": "已复制到剪贴板"
+  },
+  "error": {
+    "copy_failed": "复制失败",
+    "install_pyperclip": "需要安装 pyperclip"
+  },
+  "btn_extra": {
+    "copy_command": "复制命令"
+  }
 }

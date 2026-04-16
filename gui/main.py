@@ -634,7 +634,7 @@ class LlamaServerGUI(ctk.CTk):
         # Update command preview button
         ctk.CTkButton(
             cmd_frame,
-            text=_("btn.refreshPreview"),
+            text=_("btn.refresh_preview"),
             command=lambda: self.command_preview.update_from_config(
                 self._get_config_from_ui()
             ),

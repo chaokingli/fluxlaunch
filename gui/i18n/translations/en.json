@@ -1,4 +1,7 @@
 {
+  "app": {
+    "title": "LLama Server Manager"
+  },
   "language": {
     "label": "Language",
     "en": "English",
@@ -49,6 +52,30 @@
     "realtime_monitoring": "Real-time Monitoring",
     "monitoring_status": "Monitoring Status"
   },
+
+  "lbl": {
+    "model_file": "Model File",
+    "host": "Host",
+    "port": "Port",
+    "context_size": "Context Size",
+    "threads": "Threads",
+    "batch_size": "Batch Size",
+    "n_predict": "Max Predict Length",
+    "temperature": "Temperature",
+    "gpu_layers": "GPU Layers",
+    "cache_capacity": "Cache Capacity",
+    "flash_attention": "Flash Attention",
+    "download_from_hf": "Download from HuggingFace",
+    "popular_models": "Popular Models",
+    "local_models": "Local Models",
+    "server_status": "Server Status",
+    "api_url": "API URL",
+    "uptime": "Uptime",
+    "server_logs": "Server Logs",
+    "current_command": "Current Server Command",
+    "realtime_monitoring": "Real-time Monitoring",
+    "monitoring_status": "Monitoring Status"
+  },
   "btn": {
     "start_server": "Start Server",
     "stop_server": "Stop Server",
@@ -60,6 +87,7 @@
     "cancel_download": "Cancel",
     "refresh": "Refresh",
     "examples": "Examples",
+    "use_repo": "Use This Repository",
     "use_this_repo": "Use This Repo",
     "select_model": "Select This Model",
     "refresh_logs": "Refresh Logs",
@@ -72,6 +100,14 @@
     "clear_data": "Clear Data",
     "refresh_preview": "Refresh Preview"
   },
+
+  "btn_extra": {
+    "copy_command": "Copy Command"
+  },
+
+  "placeholders_extra": {
+    "search_params": "Search parameters..."
+  },
   "status": {
     "running": "Running",
     "stopped": "Not Running",
@@ -80,6 +116,10 @@
     "starting": "Starting...",
     "monitoring_running": "Monitoring: Running",
     "monitoring_stopped": "Monitoring: Stopped"
+  },
+
+  "status_extra": {
+    "copied_clipboard": "Copied to clipboard"
   },
     "dialogs": {
     "config_saved": "Configuration saved",
@@ -108,6 +148,53 @@
     "monitoring_stopped": "Performance monitoring stopped",
     "data_cleared": "Monitoring data cleared",
     "language_changed": "Language changed. Please restart the application to apply all changes."
+  },
+
+  "error": {
+    "copy_failed": "Copy failed",
+    "install_pyperclip": "pyperclip library is required"
+  },
+
+  "search": {
+    "placeholder": "Search..."
+  },
+
+  "turboquant": {
+    "title": "TurboQuant KV Cache Quantization",
+    "description": "TurboQuant is an aggressive KV cache quantization technique used to reduce memory usage. Recommended safe configuration: K=q8_0, V=turbo4.",
+    "vram_size": "VRAM Size:",
+    "apply_recommendation": "Apply Recommendation"
+  },
+
+  "hf": {
+    "parse_url": "Parsed HuggingFace URL",
+    "file_size": "File size",
+    "download_target": "Download target",
+    "download_start": "Starting download...",
+    "download_complete": "Download complete",
+    "download_cancelled": "Download cancelled",
+    "download_failed_http": "Download failed (HTTP error)",
+    "download_error": "Download error",
+    "connection_failed": "Network connection failed",
+    "timeout": "Download timeout",
+    "unknown_error": "Unknown error",
+    "total_size": "Total size"
+  },
+
+  "server": {
+    "stopping": "Stopping server...",
+    "stopped": "Server stopped",
+    "already_running": "Server already running",
+    "none_running": "No running server",
+    "restarting": "Restarting server...",
+    "process_not_found": "Server process not found",
+    "permission_denied": "Permission denied",
+    "start_failed": "Server failed to start",
+    "starting": "Starting...",
+    "starting_cmd": "Starting server",
+    "started": "Server started",
+    "no_logs": "No logs available",
+    "log_read_error": "Failed to read logs"
   },
   "placeholders": {
     "search_params": "Enter parameter name to search..."
