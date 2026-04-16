@@ -1,0 +1,1055 @@
+"""
+LLama Server GUI Manager
+A graphical interface for configuring and managing llama-server
+"""
+
+import customtkinter as ctk
+import tkinter as tk
+from tkinter import filedialog, messagebox
+from pathlib import Path
+import threading
+import os
+import webbrowser
+from datetime import datetime
+
+from .config import load_config, save_config, get_models_dir, DEFAULT_CONFIG
+from .server_manager import ServerManager
+from .huggingface import HuggingFaceDownloader
+from .collapsible_frame import CollapsibleFrame
+from .search_box import SearchBox
+from .param_widgets import ParamWidgets
+from .params_db import (
+    PARAMETER_GROUPS,
+    ParamCategory,
+    DEFAULT_CONFIG as PARAM_DEFAULT_CONFIG,
+)
+from .cmd_preview import CommandPreview
+from .monitor.charts import MonitoringChart
+
+
+class LlamaServerGUI(ctk.CTk):
+    """Main GUI application for llama-server management"""
+
+    def __init__(self):
+        super().__init__()
+
+        # Window setup
+        self.title("LLama Server Manager")
+        self.geometry("900x700")
+        self.minsize(800, 600)
+
+        # Set theme
+        ctk.set_appearance_mode("dark")
+        ctk.set_default_color_theme("blue")
+
+        # Initialize variables first
+        self.model_path_var = ctk.StringVar(value="")
+        self.host_var = ctk.StringVar(value="0.0.0.0")
+        self.port_var = ctk.StringVar(value="8080")
+        self.context_size_var = ctk.StringVar(value="4096")
+        self.threads_var = ctk.StringVar(value="")
+        self.batch_size_var = ctk.StringVar(value="512")
+        self.n_predict_var = ctk.StringVar(value="256")
+        self.temperature_var = ctk.StringVar(value="0.7")
+        self.n_gpu_layers_var = ctk.StringVar(value="0")
+        self.cache_capacity_var = ctk.StringVar(value="2048MiB")
+        self.flash_attn_var = ctk.BooleanVar(value=False)
+
+        # Initialize managers
+        self.server_manager = ServerManager()
+        self.hf_downloader = HuggingFaceDownloader()
+
+        # Setup callbacks
+        self.server_manager.set_log_callback(self._add_log)
+        self.server_manager.set_status_callback(self._update_status_label)
+
+        # Create UI
+        self._create_menu()
+        self._create_ui()
+
+        # Load initial config
+        self._load_config_to_ui()
+
+        # Start status update loop
+        self._update_status_loop()
+
+    def _create_menu(self):
+        """Create menu bar"""
+        menubar = tk.Menu(self)
+        self.config(menu=menubar)
+
+        # File menu
+        file_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="文件", menu=file_menu)
+        file_menu.add_command(label="保存配置", command=self._save_config)
+        file_menu.add_command(label="重置配置", command=self._reset_config)
+        file_menu.add_separator()
+        file_menu.add_command(label="退出", command=self.quit)
+
+        # Help menu
+        help_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="帮助", menu=help_menu)
+        help_menu.add_command(label="关于", command=self._show_about)
+
+    def _create_ui(self):
+        """Create the main UI"""
+        # Main container with tabs
+        self.notebook = ctk.CTkTabview(self)
+        self.notebook.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Create tabs
+        self.tab_config = self.notebook.add("服务器配置")
+        self.tab_model = self.notebook.add("模型管理")
+        self.tab_status = self.notebook.add("状态监控")
+        self.tab_advanced = self.notebook.add("Advanced Parameters")
+        self.tab_monitoring = self.notebook.add("Monitoring")
+
+        self._create_config_tab()
+        self._create_model_tab()
+        self._create_status_tab()
+        self._create_advanced_tab()
+        self._create_monitoring_tab()
+
+    def _create_config_tab(self):
+        """Create server configuration tab"""
+        # Scrollable frame for config
+        self.config_scroll = ctk.CTkScrollableFrame(self.tab_config)
+        self.config_scroll.pack(fill="both", expand=True, padx=5, pady=5)
+
+        row = 0
+
+        # Model path
+        self._create_file_field(
+            self.config_scroll, "模型文件", "", self._browse_model, row
+        )
+        row += 1
+
+        # Host
+        self._create_entry_field(self.config_scroll, "监听地址", self.host_var, row)
+        row += 1
+
+        # Port
+        self._create_entry_field(self.config_scroll, "端口", self.port_var, row)
+        row += 1
+
+        # Context size
+        self._create_entry_field(
+            self.config_scroll, "上下文长度", self.context_size_var, row
+        )
+        row += 1
+
+        # Threads
+        self._create_entry_field(
+            self.config_scroll, "线程数 (留空=自动)", self.threads_var, row
+        )
+        row += 1
+
+        # Batch size
+        self._create_entry_field(
+            self.config_scroll, "Batch Size", self.batch_size_var, row
+        )
+        row += 1
+
+        # N Predict
+        self._create_entry_field(
+            self.config_scroll, "最大预测长度", self.n_predict_var, row
+        )
+        row += 1
+
+        # Temperature
+        self._create_entry_field(self.config_scroll, "温度", self.temperature_var, row)
+        row += 1
+
+        # GPU layers
+        self._create_entry_field(
+            self.config_scroll, "GPU 层数 (0=禁用)", self.n_gpu_layers_var, row
+        )
+        row += 1
+
+        # Cache capacity
+        self._create_entry_field(
+            self.config_scroll, "缓存容量", self.cache_capacity_var, row
+        )
+        row += 1
+
+        # Flash attention
+        flash_frame = ctk.CTkFrame(self.config_scroll)
+        flash_frame.pack(fill="x", padx=10, pady=5)
+        ctk.CTkLabel(flash_frame, text="Flash Attention", width=200, anchor="w").pack(
+            side="left"
+        )
+        ctk.CTkCheckBox(flash_frame, variable=self.flash_attn_var).pack(
+            side="left", padx=10
+        )
+
+        # Buttons frame
+        btn_frame = ctk.CTkFrame(self.config_scroll)
+        btn_frame.pack(fill="x", padx=10, pady=20)
+
+        self.btn_start = ctk.CTkButton(
+            btn_frame, text="启动服务器", command=self._start_server, fg_color="green"
+        )
+        self.btn_start.pack(side="left", padx=5)
+
+        self.btn_stop = ctk.CTkButton(
+            btn_frame, text="停止服务器", command=self._stop_server, fg_color="red"
+        )
+        self.btn_stop.pack(side="left", padx=5)
+
+        self.btn_restart = ctk.CTkButton(
+            btn_frame, text="重新启动", command=self._restart_server, fg_color="orange"
+        )
+        self.btn_restart.pack(side="left", padx=5)
+
+        self.btn_save = ctk.CTkButton(
+            btn_frame, text="保存配置", command=self._save_config
+        )
+        self.btn_save.pack(side="right", padx=5)
+
+    def _create_model_tab(self):
+        """Create model management tab"""
+        # HuggingFace download section
+        hf_frame = ctk.CTkFrame(self.tab_model)
+        hf_frame.pack(fill="x", padx=10, pady=10)
+
+        hf_title = ctk.CTkLabel(
+            hf_frame,
+            text="从 HuggingFace 下载模型",
+            font=ctk.CTkFont(size=14, weight="bold"),
+        )
+        hf_title.pack(padx=10, pady=5)
+
+        # URL entry
+        url_frame = ctk.CTkFrame(hf_frame)
+        url_frame.pack(fill="x", padx=10, pady=5)
+
+        ctk.CTkLabel(url_frame, text="HuggingFace URL:").pack(side="left", padx=5)
+        self.hf_url_var = ctk.StringVar()
+        self.hf_url_entry = ctk.CTkEntry(
+            url_frame, textvariable=self.hf_url_var, width=500
+        )
+        self.hf_url_entry.pack(side="left", padx=5, fill="x", expand=True)
+
+        # Examples button
+        ctk.CTkButton(
+            url_frame, text="示例", width=60, command=self._show_hf_examples
+        ).pack(side="left", padx=5)
+
+        # Progress bar
+        self.download_progress = ctk.CTkProgressBar(hf_frame)
+        self.download_progress.pack(fill="x", padx=10, pady=5)
+        self.download_progress.set(0)
+
+        # Progress label
+        self.download_progress_label = ctk.CTkLabel(hf_frame, text="")
+        self.download_progress_label.pack(padx=10, pady=2)
+
+        # Download buttons
+        dl_btn_frame = ctk.CTkFrame(hf_frame)
+        dl_btn_frame.pack(padx=10, pady=10)
+
+        self.btn_download = ctk.CTkButton(
+            dl_btn_frame, text="开始下载", command=self._start_download, fg_color="blue"
+        )
+        self.btn_download.pack(side="left", padx=5)
+
+        self.btn_cancel_download = ctk.CTkButton(
+            dl_btn_frame, text="取消", command=self._cancel_download, fg_color="gray"
+        )
+        self.btn_cancel_download.pack(side="left", padx=5)
+
+        # Popular models
+        popular_frame = ctk.CTkFrame(self.tab_model)
+        popular_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        popular_title = ctk.CTkLabel(
+            popular_frame,
+            text="热门 GGUF 模型",
+            font=ctk.CTkFont(size=14, weight="bold"),
+        )
+        popular_title.pack(padx=10, pady=5)
+
+        self.popular_list = ctk.CTkScrollableFrame(popular_frame)
+        self.popular_list.pack(fill="both", expand=True, padx=5, pady=5)
+
+        self._populate_popular_models()
+
+        # Local models list
+        local_frame = ctk.CTkFrame(self.tab_model)
+        local_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        local_title = ctk.CTkLabel(
+            local_frame, text="本地模型", font=ctk.CTkFont(size=14, weight="bold")
+        )
+        local_title.pack(padx=10, pady=5)
+
+        self.local_models_listbox = ctk.CTkScrollableFrame(local_frame)
+        self.local_models_listbox.pack(fill="both", expand=True, padx=5, pady=5)
+
+        self._refresh_local_models()
+
+        # Refresh button
+        ctk.CTkButton(
+            local_frame, text="刷新", command=self._refresh_local_models, width=100
+        ).pack(pady=5)
+
+    def _create_status_tab(self):
+        """Create status monitoring tab"""
+        # Status indicator
+        status_frame = ctk.CTkFrame(self.tab_status)
+        status_frame.pack(fill="x", padx=10, pady=10)
+
+        ctk.CTkLabel(status_frame, text="服务器状态:", width=120, anchor="w").pack(
+            side="left"
+        )
+        self.status_label = ctk.CTkLabel(
+            status_frame, text="未运行", fg_color="gray", width=100, corner_radius=5
+        )
+        self.status_label.pack(side="left", padx=10)
+
+        self.pid_label = ctk.CTkLabel(status_frame, text="")
+        self.pid_label.pack(side="right", padx=10)
+
+        # Server info
+        info_frame = ctk.CTkFrame(self.tab_status)
+        info_frame.pack(fill="x", padx=10, pady=5)
+
+        self.url_label = ctk.CTkLabel(info_frame, text="API URL: -")
+        self.url_label.pack(anchor="w", padx=10, pady=5)
+
+        self.uptime_label = ctk.CTkLabel(info_frame, text="运行时间：-")
+        self.uptime_label.pack(anchor="w", padx=10, pady=5)
+
+        # Log viewer
+        log_frame = ctk.CTkFrame(self.tab_status)
+        log_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        log_title = ctk.CTkLabel(
+            log_frame, text="服务器日志", font=ctk.CTkFont(size=14, weight="bold")
+        )
+        log_title.pack(padx=10, pady=5)
+
+        self.log_text = ctk.CTkTextbox(log_frame)
+        self.log_text.pack(fill="both", expand=True, padx=5, pady=5)
+
+        # Log buttons
+        log_btn_frame = ctk.CTkFrame(log_frame)
+        log_btn_frame.pack(fill="x", padx=5, pady=5)
+
+        ctk.CTkButton(
+            log_btn_frame, text="刷新日志", command=self._refresh_logs, width=100
+        ).pack(side="left", padx=5)
+
+        ctk.CTkButton(
+            log_btn_frame,
+            text="清空日志",
+            command=self._clear_logs,
+            fg_color="gray",
+            width=100,
+        ).pack(side="left", padx=5)
+
+        ctk.CTkButton(
+            log_btn_frame, text="打开浏览器", command=self._open_browser, width=100
+        ).pack(side="right", padx=5)
+
+    def _create_advanced_tab(self):
+        """Create advanced parameters tab with categorized collapsible sections"""
+        # Scrollable frame for advanced parameters
+        scroll_frame = ctk.CTkScrollableFrame(self.tab_advanced)
+        scroll_frame.pack(fill="both", expand=True, padx=5, pady=5)
+
+        # Search box at top
+        search_frame = ctk.CTkFrame(scroll_frame)
+        search_frame.pack(fill="x", padx=10, pady=5)
+
+        ctk.CTkLabel(
+            search_frame, text="搜索参数:", font=ctk.CTkFont(weight="bold")
+        ).pack(side="left", padx=5)
+
+        self.advanced_search = SearchBox(
+            search_frame,
+            search_callback=self._filter_advanced_params,
+            placeholder_text="输入参数名称搜索...",
+            width=400,
+        )
+        self.advanced_search.pack(side="left", padx=5, fill="x", expand=True)
+
+        # Container for parameter categories
+        self.advanced_params_container = ctk.CTkFrame(
+            scroll_frame, fg_color="transparent"
+        )
+        self.advanced_params_container.pack(fill="x", expand=True, padx=5, pady=5)
+
+        # Store parameter widgets for filtering
+        self._advanced_param_widgets = {}
+        self._category_frames = {}
+
+        # Category display names mapping
+        category_names = {
+            ParamCategory.COMMON: "Common Parameters",
+            ParamCategory.GPU_MEMORY: "GPU / Memory Settings",
+            ParamCategory.SERVER: "Server Settings",
+            ParamCategory.SAMPLING: "Sampling Parameters",
+            ParamCategory.TURBOQUANT: "TurboQuant Options",
+        }
+
+        # Create collapsible sections for each category
+        row = 0
+        for category in ParamCategory:
+            params = PARAMETER_GROUPS.get(category, [])
+            if not params:
+                continue
+
+            # Create collapsible frame for category
+            cat_frame = CollapsibleFrame(
+                self.advanced_params_container,
+                title=category_names.get(category, category.value),
+                expanded=True,
+            )
+            cat_frame.pack(fill="x", padx=5, pady=3)
+            self._category_frames[category] = cat_frame
+
+            # Create parameter widgets for this category
+            param_widgets_factory = ParamWidgets(cat_frame.content_frame)
+
+            for param_def in params:
+                frame, widget = param_widgets_factory.create_widget(
+                    param_def, row=row, column=0
+                )
+                # 将参数 frame 添加到标签页内容框中
+                frame.pack(fill="x", padx=5, pady=2)
+                self._advanced_param_widgets[param_def.name] = {
+                    "widget": widget,
+                    "frame": frame,
+                    "category": category,
+                    "param_def": param_def,
+                }
+
+        # Buttons frame
+        btn_frame = ctk.CTkFrame(scroll_frame)
+        btn_frame.pack(fill="x", padx=10, pady=10)
+
+        ctk.CTkButton(
+            btn_frame,
+            text="应用参数",
+            command=self._apply_advanced_params,
+            fg_color="green",
+        ).pack(side="left", padx=5)
+
+        ctk.CTkButton(
+            btn_frame,
+            text="重置为默认值",
+            command=self._reset_advanced_params,
+            fg_color="orange",
+        ).pack(side="left", padx=5)
+
+        ctk.CTkButton(btn_frame, text="保存配置", command=self._save_config).pack(
+            side="right", padx=5
+        )
+
+    def _filter_advanced_params(self, search_text: str):
+        """Filter advanced parameters based on search text"""
+        search_text = search_text.lower().strip()
+
+        for param_name, info in self._advanced_param_widgets.items():
+            param_def = info["param_def"]
+            frame = info["frame"]
+            category = info["category"]
+
+            # Check if parameter matches search
+            if search_text:
+                matches = (
+                    search_text in param_name.lower()
+                    or search_text in param_def.description.lower()
+                    or search_text in param_def.flag.lower()
+                )
+            else:
+                matches = True
+
+            # Show/hide parameter frame
+            if matches:
+                frame.pack(fill="x", padx=5, pady=3)
+            else:
+                frame.pack_forget()
+
+        # Show/hide category frames based on whether they have visible params
+        for category, cat_frame in self._category_frames.items():
+            has_visible = False
+            for param_name, info in self._advanced_param_widgets.items():
+                if info["category"] == category:
+                    if info["frame"].winfo_viewable():
+                        has_visible = True
+                        break
+
+            if has_visible:
+                cat_frame.pack(fill="x", padx=5, pady=3)
+            else:
+                cat_frame.pack_forget()
+
+    def _apply_advanced_params(self):
+        """Apply advanced parameters to configuration"""
+        config_updates = {}
+
+        for param_name, info in self._advanced_param_widgets.items():
+            widget = info["widget"]
+            value = widget.get_value()
+            if value is not None:
+                config_updates[param_name] = value
+
+        # Update UI variables
+        for key, value in config_updates.items():
+            var_name = f"{key}_var"
+            if hasattr(self, var_name):
+                var = getattr(self, var_name)
+                if isinstance(var, ctk.StringVar):
+                    var.set(str(value))
+                elif isinstance(var, ctk.BooleanVar):
+                    var.set(bool(value))
+
+        # Save config
+        config = self._get_config_from_ui()
+        config.update(config_updates)
+        save_config(config)
+
+        self._add_log("高级参数已应用并保存")
+
+    def _reset_advanced_params(self):
+        """Reset advanced parameters to defaults"""
+        for param_name, info in self._advanced_param_widgets.items():
+            widget = info["widget"]
+            param_def = info["param_def"]
+            widget.set_value(param_def.default)
+
+        self._add_log("高级参数已重置为默认值")
+
+    def _create_monitoring_tab(self):
+        """Create monitoring tab with real-time charts and command preview"""
+        # Top section: Command Preview
+        cmd_frame = ctk.CTkFrame(self.tab_monitoring)
+        cmd_frame.pack(fill="x", padx=10, pady=5)
+
+        self.command_preview = CommandPreview(
+            cmd_frame,
+            config=self._get_config_from_ui(),
+            label="当前服务器命令:",
+        )
+        self.command_preview.pack(fill="x", padx=5, pady=5)
+
+        # Update command preview button
+        ctk.CTkButton(
+            cmd_frame,
+            text="刷新命令预览",
+            command=lambda: self.command_preview.update_from_config(
+                self._get_config_from_ui()
+            ),
+            width=150,
+        ).pack(side="right", padx=10, pady=5)
+
+        # Bottom section: Charts
+        charts_frame = ctk.CTkFrame(self.tab_monitoring)
+        charts_frame.pack(fill="both", expand=True, padx=10, pady=5)
+
+        charts_title = ctk.CTkLabel(
+            charts_frame,
+            text="实时性能监控",
+            font=ctk.CTkFont(size=14, weight="bold"),
+        )
+        charts_title.pack(padx=10, pady=5)
+
+        # Chart container
+        self.chart_container = ctk.CTkFrame(charts_frame)
+        self.chart_container.pack(fill="both", expand=True, padx=5, pady=5)
+
+        # Create monitoring chart
+        self.monitoring_chart = MonitoringChart(self.chart_container, buffer_size=100)
+
+        # Control buttons
+        chart_btn_frame = ctk.CTkFrame(charts_frame)
+        chart_btn_frame.pack(fill="x", padx=5, pady=5)
+
+        self.btn_start_monitoring = ctk.CTkButton(
+            chart_btn_frame,
+            text="开始监控",
+            command=self._start_monitoring,
+            fg_color="green",
+            width=100,
+        )
+        self.btn_start_monitoring.pack(side="left", padx=5)
+
+        self.btn_stop_monitoring = ctk.CTkButton(
+            chart_btn_frame,
+            text="停止监控",
+            command=self._stop_monitoring,
+            fg_color="red",
+            width=100,
+        )
+        self.btn_stop_monitoring.pack(side="left", padx=5)
+
+        ctk.CTkButton(
+            chart_btn_frame,
+            text="清除数据",
+            command=self._clear_monitoring_data,
+            width=100,
+        ).pack(side="left", padx=5)
+
+        # Status label
+        self.monitoring_status = ctk.CTkLabel(
+            chart_btn_frame, text="监控状态: 已停止", text_color="gray"
+        )
+        self.monitoring_status.pack(side="right", padx=10)
+
+    def _start_monitoring(self):
+        """Start monitoring data collection"""
+        self.monitoring_chart.start_updating()
+        self.monitoring_status.configure(text="监控状态: 运行中", text_color="green")
+        self._add_log("性能监控已启动")
+
+        # Start simulated data updates (in real implementation, this would connect to actual metrics)
+        self._update_monitoring_data()
+
+    def _stop_monitoring(self):
+        """Stop monitoring data collection"""
+        self.monitoring_chart.stop_updating()
+        self.monitoring_status.configure(text="监控状态: 已停止", text_color="gray")
+        self._add_log("性能监控已停止")
+
+    def _clear_monitoring_data(self):
+        """Clear monitoring chart data"""
+        self.monitoring_chart.clear_data()
+        self._add_log("监控数据已清除")
+
+    def _update_monitoring_data(self):
+        """Update monitoring chart with simulated data"""
+        if not self.monitoring_chart._is_updating:
+            return
+
+        # In real implementation, this would fetch actual metrics from the server
+        # For now, generate simulated data for demonstration
+        import random
+
+        test_data = {
+            "ram_mb": random.uniform(1000, 4000),
+            "vram_mb": random.uniform(500, 2000) if random.random() > 0.3 else 0,
+            "tokens_per_sec": random.uniform(5, 25),
+        }
+        self.monitoring_chart.update_data(test_data)
+
+        # Schedule next update
+        self.after(1000, self._update_monitoring_data)
+
+    def _create_entry_field(self, parent, label, var, row):
+        """Create a labeled entry field with StringVar binding"""
+        frame = ctk.CTkFrame(parent)
+        frame.pack(fill="x", padx=10, pady=3)
+
+        ctk.CTkLabel(frame, text=label, width=150, anchor="w").pack(side="left")
+
+        entry = ctk.CTkEntry(frame, textvariable=var, width=200)
+        entry.pack(side="right")
+
+    def _create_file_field(self, parent, label, default, browse_cmd, row):
+        """Create a labeled file field with browse button"""
+        frame = ctk.CTkFrame(parent)
+        frame.pack(fill="x", padx=10, pady=5)
+
+        ctk.CTkLabel(frame, text=label, width=150, anchor="w").pack(side="left")
+
+        entry = ctk.CTkEntry(frame, textvariable=self.model_path_var, width=500)
+        entry.pack(side="left", padx=5, fill="x", expand=True)
+
+        ctk.CTkButton(frame, text="浏览...", width=60, command=browse_cmd).pack(
+            side="left", padx=5
+        )
+
+    def _browse_model(self):
+        """Open file dialog to select model"""
+        models_dir = str(get_models_dir())
+        filename = filedialog.askopenfilename(
+            title="选择 GGUF 模型文件",
+            initialdir=models_dir,
+            filetypes=[("GGUF files", "*.gguf"), ("All files", "*.*")],
+        )
+        if filename:
+            self.model_path_var.set(filename)
+
+    def _load_config_to_ui(self):
+        """Load configuration from file to UI"""
+        config = load_config()
+
+        self.model_path_var.set(config.get("model_path", ""))
+        self.host_var.set(config.get("host", "0.0.0.0"))
+        self.port_var.set(str(config.get("port", 8080)))
+        self.context_size_var.set(str(config.get("context_size", 4096)))
+        self.threads_var.set(config.get("threads", ""))
+        self.batch_size_var.set(str(config.get("batch_size", 512)))
+        self.n_predict_var.set(str(config.get("n_predict", 256)))
+        self.temperature_var.set(str(config.get("temperature", 0.7)))
+        self.n_gpu_layers_var.set(str(config.get("n_gpu_layers", 0)))
+        self.cache_capacity_var.set(config.get("cache_capacity", "2048MiB"))
+        self.flash_attn_var.set(config.get("flash_attn", False))
+
+        # Load advanced parameters if widgets are created
+        if hasattr(self, "_advanced_param_widgets"):
+            for param_name, info in self._advanced_param_widgets.items():
+                if param_name in config:
+                    info["widget"].set_value(config[param_name])
+
+    def _get_config_from_ui(self):
+        """Get current configuration from UI"""
+        config = {}
+
+        config["model_path"] = self.model_path_var.get()
+        config["host"] = self.host_var.get()
+        config["port"] = int(self.port_var.get()) if self.port_var.get() else 8080
+        config["context_size"] = (
+            int(self.context_size_var.get()) if self.context_size_var.get() else 4096
+        )
+
+        threads_val = self.threads_var.get()
+        config["threads"] = (
+            int(threads_val) if threads_val and threads_val != "None" else None
+        )
+
+        config["batch_size"] = (
+            int(self.batch_size_var.get()) if self.batch_size_var.get() else 512
+        )
+        config["n_predict"] = (
+            int(self.n_predict_var.get()) if self.n_predict_var.get() else 256
+        )
+        config["temperature"] = (
+            float(self.temperature_var.get()) if self.temperature_var.get() else 0.7
+        )
+        config["n_gpu_layers"] = (
+            int(self.n_gpu_layers_var.get()) if self.n_gpu_layers_var.get() else 0
+        )
+        config["cache_capacity"] = self.cache_capacity_var.get()
+        config["flash_attn"] = self.flash_attn_var.get()
+
+        # Add advanced parameters if widgets are created
+        if hasattr(self, "_advanced_param_widgets"):
+            for param_name, info in self._advanced_param_widgets.items():
+                value = info["widget"].get_value()
+                if value is not None:
+                    config[param_name] = value
+
+        return config
+
+    def _save_config(self):
+        """Save current configuration"""
+        config = self._get_config_from_ui()
+        if save_config(config):
+            self._add_log("配置已保存")
+            messagebox.showinfo("成功", "配置已保存")
+        else:
+            messagebox.showerror("错误", "保存配置失败")
+
+    def _reset_config(self):
+        """Reset configuration to defaults"""
+        if messagebox.askyesno("确认", "确定要重置为默认配置吗？"):
+            for key, value in DEFAULT_CONFIG.items():
+                var_name = f"{key}_var"
+                if hasattr(self, var_name):
+                    var = getattr(self, var_name)
+                    if isinstance(var, ctk.BooleanVar):
+                        var.set(value)
+                    elif isinstance(var, ctk.StringVar):
+                        var.set(str(value) if value is not None else "")
+            self._add_log("配置已重置为默认值")
+
+    def _start_server(self):
+        """Start the server"""
+        # Save config first
+        self._save_config()
+
+        # Check if already running
+        if self.server_manager.is_running():
+            messagebox.showwarning("警告", "服务器已经在运行")
+            return
+
+        # Check if port is in use
+        config = self._get_config_from_ui()
+        port = config.get("port", 8080)
+        if self.server_manager.is_server_running_on_port(port):
+            response = messagebox.askyesno(
+                "端口被占用",
+                f"端口 {port} 已有服务器运行。\n是否停止现有服务器并启动新配置？",
+            )
+            if response:
+                self._restart_server()
+            return
+
+        # Start in background thread
+        def run_start():
+            config = self._get_config_from_ui()
+            success = self.server_manager.start(config)
+            if not success:
+                self.after(0, lambda: messagebox.showerror("错误", "服务器启动失败"))
+
+        thread = threading.Thread(target=run_start, daemon=True)
+        thread.start()
+
+    def _stop_server(self):
+        """Stop the server"""
+        if not self.server_manager.is_running():
+            # Check if any server on port
+            config = self._get_config_from_ui()
+            port = config.get("port", 8080)
+            if not self.server_manager.is_server_running_on_port(port):
+                messagebox.showinfo("提示", "服务器未运行")
+                return
+
+        response = messagebox.askyesno("确认", "确定要停止服务器吗？")
+        if response:
+            self.server_manager.stop()
+
+    def _restart_server(self):
+        """Restart the server"""
+        response = messagebox.askyesno("确认", "确定要重新启动服务器吗？")
+        if not response:
+            return
+
+        def run_restart():
+            config = self._get_config_from_ui()
+            self.server_manager.restart(config)
+
+        thread = threading.Thread(target=run_restart, daemon=True)
+        thread.start()
+
+    def _start_download(self):
+        """Start downloading a model"""
+        url = self.hf_url_var.get().strip()
+        if not url:
+            messagebox.showwarning("警告", "请输入 HuggingFace URL")
+            return
+
+        # Disable download button
+        self.btn_download.configure(state="disabled")
+        self.download_progress.set(0)
+        self.download_progress_label.configure(text="正在连接...")
+
+        def progress_callback(downloaded, total):
+            if total > 0:
+                progress = downloaded / total
+                self.after(0, lambda: self.download_progress.set(progress))
+                self.after(
+                    0,
+                    lambda: self.download_progress_label.configure(
+                        text=f"{self._format_size(downloaded)} / {self._format_size(total)}"
+                    ),
+                )
+
+        def log_callback(msg):
+            self.after(0, lambda: self._add_log(f"[下载] {msg}"))
+
+        def on_complete(success, result):
+            self.btn_download.configure(state="normal")
+            if success:
+                self.download_progress.set(1)
+                self.download_progress_label.configure(text="下载完成!")
+                self._add_log(f"模型已保存到：{result}")
+                self._refresh_local_models()
+                messagebox.showinfo("成功", f"模型已下载:\n{result}")
+            else:
+                self.download_progress.set(0)
+                self.download_progress_label.configure(text="下载失败")
+                if "取消" not in result:
+                    messagebox.showerror("错误", result)
+
+        def run_download():
+            success, result = self.hf_downloader.download(
+                url, progress_callback, log_callback
+            )
+            self.after(0, lambda: on_complete(success, result))
+
+        thread = threading.Thread(target=run_download, daemon=True)
+        thread.start()
+
+    def _cancel_download(self):
+        """Cancel current download"""
+        self.hf_downloader.set_cancel()
+        self.btn_download.configure(state="normal")
+        self.download_progress_label.configure(text="下载已取消")
+
+    def _show_hf_examples(self):
+        """Show HuggingFace URL examples"""
+        examples = """HuggingFace URL 示例:
+
+1. 完整 URL:
+https://huggingface.co/TheBloke/Llama-2-7B-GGUF/resolve/main/llama-2-7b.Q4_K_M.gguf
+
+2. 短格式:
+TheBloke/Llama-2-7B-GGUF/llama-2-7b.Q4_K_M.gguf
+
+3. 其他热门模型:
+- unsloth/Llama-3.2-3B-Instruct-GGUF/model.Q4_K_M.gguf
+- Qwen/Qwen2.5-7B-Instruct-GGUF/qwen2.5-7b-instruct-q4_k_m.gguf
+- bartowski/gemma-2-9b-it-GGUF/gemma-2-9b-it-Q4_K_M.gguf"""
+
+        messagebox.showinfo("HuggingFace URL 示例", examples)
+
+    def _populate_popular_models(self):
+        """Populate popular models list"""
+        repos = self.hf_downloader.get_popular_gguf_repos()
+
+        for repo in repos:
+            frame = ctk.CTkFrame(self.popular_list)
+            frame.pack(fill="x", padx=5, pady=3)
+
+            ctk.CTkLabel(frame, text=repo["name"], width=200, anchor="w").pack(
+                side="left"
+            )
+
+            ctk.CTkButton(
+                frame,
+                text="使用此仓库",
+                width=100,
+                command=lambda r=repo["repo"]: self._use_popular_repo(r),
+            ).pack(side="left", padx=5)
+
+    def _use_popular_repo(self, repo: str):
+        """Use a popular repository - show example files"""
+        # For now, just set the repo in URL
+        self.hf_url_var.set(f"{repo}/")
+        self._add_log(f"已选择仓库：{repo}")
+
+    def _refresh_local_models(self):
+        """Refresh local models list"""
+        # Clear current list
+        for widget in self.local_models_listbox.winfo_children():
+            widget.destroy()
+
+        models_dir = get_models_dir()
+        if not models_dir.exists():
+            return
+
+        gguf_files = sorted(models_dir.glob("*.gguf"))
+        for gguf in gguf_files:
+            frame = ctk.CTkFrame(self.local_models_listbox)
+            frame.pack(fill="x", padx=5, pady=2)
+
+            size_str = self._format_size(gguf.stat().st_size)
+            ctk.CTkLabel(
+                frame, text=f"{gguf.name} ({size_str})", width=400, anchor="w"
+            ).pack(side="left")
+
+            ctk.CTkButton(
+                frame,
+                text="选择此模型",
+                width=100,
+                command=lambda p=str(gguf): self._select_model(p),
+            ).pack(side="left", padx=5)
+
+    def _select_model(self, path: str):
+        """Select a model from the list"""
+        self.model_path_var.set(path)
+        self.notebook.select(0)  # Switch to config tab
+        self._add_log(f"已选择模型：{path}")
+
+    def _refresh_logs(self):
+        """Refresh log display"""
+        self.log_text.delete("0.0", "end")
+        logs = self.server_manager.get_logs()
+        self.log_text.insert("0.0", logs)
+
+    def _clear_logs(self):
+        """Clear log display"""
+        self.log_text.delete("0.0", "end")
+
+    def _open_browser(self):
+        """Open server URL in browser"""
+        config = self._get_config_from_ui()
+        host = config.get("host", "0.0.0.0")
+        port = config.get("port", 8080)
+
+        if host == "0.0.0.0":
+            host = "localhost"
+
+        url = f"http://{host}:{port}"
+        webbrowser.open(url)
+        self._add_log(f"打开浏览器：{url}")
+
+    def _add_log(self, message: str):
+        """Add a log message"""
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        log_entry = f"[{timestamp}] {message}\n"
+
+        self.log_text.insert("end", log_entry)
+        self.log_text.see("end")
+
+    def _update_status_label(self, status: str):
+        """Update the status indicator"""
+        if status == "运行中":
+            self.status_label.configure(text="运行中", fg_color="green")
+            self.pid_label.configure(
+                text=f"PID: {self.server_manager.process.pid if self.server_manager.process else 'N/A'}"
+            )
+            config = self._get_config_from_ui()
+            host = config.get("host", "0.0.0.0")
+            port = config.get("port", 8080)
+            if host == "0.0.0.0":
+                host = "localhost"
+            self.url_label.configure(text=f"API URL: http://{host}:{port}")
+        elif status == "已停止":
+            self.status_label.configure(text="已停止", fg_color="red")
+            self.pid_label.configure(text="")
+            self.url_label.configure(text="API URL: -")
+            self.uptime_label.configure(text="运行时间：-")
+        elif status.startswith("错误"):
+            self.status_label.configure(text="错误", fg_color="orange")
+        else:
+            self.status_label.configure(text=status, fg_color="gray")
+
+    def _update_status_loop(self):
+        """Periodically update server status"""
+        is_running = self.server_manager.is_running()
+
+        if is_running:
+            if self.status_label.cget("text") != "运行中":
+                self._update_status_label("运行中")
+        else:
+            # Check if server running on our port
+            config = self._get_config_from_ui()
+            port = config.get("port", 8080)
+            if self.server_manager.is_server_running_on_port(port):
+                pid = self.server_manager.get_server_pid_on_port(port)
+                self.status_label.configure(text="外部运行", fg_color="yellow")
+                self.pid_label.configure(text=f"外部 PID: {pid}")
+            elif self.status_label.cget("text") == "运行中":
+                self._update_status_label("已停止")
+
+        # Schedule next update
+        self.after(2000, self._update_status_loop)
+
+    def _show_about(self):
+        """Show about dialog"""
+        about_text = """LLama Server Manager
+
+一个用于管理和配置 llama-server 的图形化工具
+
+功能:
+- 配置 llama-server 所有参数
+- 从 HuggingFace 下载 GGUF 模型
+- 启动/停止/重启服务器
+- 实时监控服务器状态
+- 查看服务器日志
+
+版本：1.0.0"""
+        messagebox.showinfo("关于 LLama Server Manager", about_text)
+
+    def _format_size(self, size: int) -> str:
+        """Format file size in human-readable format"""
+        for unit in ["B", "KB", "MB", "GB", "TB"]:
+            if size < 1024.0:
+                return f"{size:.1f}{unit}"
+            size /= 1024.0
+        return f"{size:.1f}PB"
+
+
+def main():
+    """Main entry point"""
+    app = LlamaServerGUI()
+    app.mainloop()
+
+
+if __name__ == "__main__":
+    main()

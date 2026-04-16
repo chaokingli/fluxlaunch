@@ -1,0 +1,12 @@
+Widget Hierarchy Analysis
+============================================================
+
+CTk (visible=0, size=1x1, children=1)
+  CollapsibleFrame (visible=0, size=1x1, children=2)
+    CTkFrame (visible=0, size=1x1, children=2)
+      CTkButton (visible=0, size=1x1, children=2)
+      CTkLabel (visible=0, size=1x1, children=2)
+    CTkFrame (visible=0, size=1x1, children=3)
+      CTkFrame (visible=0, size=1x1, children=2)
+      CTkFrame (visible=0, size=1x1, children=2)
+      CTkFrame (visible=0, size=1x1, children=2)
